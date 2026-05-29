@@ -26,12 +26,14 @@ fun ModelsScreen(
     modelStore: ModelStore,
     modelPaths: LocalModelPaths,
     onRunLocalTextTest: () -> Unit,
+    onRunLocalOcrTest: () -> Unit,
     onImportTranslationModel: () -> Unit,
     onImportOcrModel: () -> Unit,
     onImportOcrProjector: () -> Unit,
     onImportWhisperModel: () -> Unit,
     onImportSupertonicModel: () -> Unit,
     localTextTestStatus: String?,
+    localOcrTestStatus: String?,
     importStatus: String?,
     ocrImportStatus: String?,
     speechImportStatus: String?,
@@ -67,6 +69,12 @@ fun ModelsScreen(
             }
         }
         ModelActionSection(title = "Image OCR") {
+            Button(onClick = onRunLocalOcrTest) {
+                Text("Run local OCR test")
+            }
+            localOcrTestStatus?.let { status ->
+                Text(text = status)
+            }
             Button(onClick = onImportOcrModel) {
                 Text("Import OCR GGUF")
             }

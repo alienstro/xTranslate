@@ -11,17 +11,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.xtranslate.domain.ImageInput
+import com.xtranslate.llama.AndroidLlamaRuntime
+import com.xtranslate.llama.LocalOcrRunner
 import com.xtranslate.llama.LocalTextGenerationRunner
+import com.xtranslate.llama.LlamaOcrEngine
+import com.xtranslate.llama.LlamaProfileFactory
+import com.xtranslate.llama.LlamaTranslationEngine
 import com.xtranslate.llama.nativebridge.OfficialNativeLlamaBridge
 import com.xtranslate.model.FileBackedModelStore
 import com.xtranslate.model.LocalModelImporter
 import com.xtranslate.model.LocalModelPaths
 import com.xtranslate.model.ModelRegistry
 import com.xtranslate.runtime.EngineCoordinator
-import com.xtranslate.runtime.FakeOcrEngine
 import com.xtranslate.runtime.FakeSpeechToTextEngine
 import com.xtranslate.runtime.FakeTextToSpeechEngine
-import com.xtranslate.runtime.FakeTranslationEngine
 import com.xtranslate.ui.XTranslateApp
 import com.xtranslate.ui.chat.ChatViewModel
 import com.xtranslate.ui.theme.XTranslateAppTheme
@@ -37,16 +41,26 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val modelPaths = LocalModelPaths(filesDir)
+        val ocrPack = ModelRegistry.defaultPacks().first { pack -> pack.id == "ocr.paddleocr-vl-1_5.q4" }
+        val ocrFiles = modelPaths.modelFiles(ocrPack)
         val coordinator =
             EngineCoordinator(
-                ocrEngine = FakeOcrEngine(),
-                translationEngine = FakeTranslationEngine(),
+                ocrEngine =
+                    LlamaOcrEngine(
+                        runtime = AndroidLlamaRuntime(OfficialNativeLlamaBridge(this)),
+                        profile = LlamaProfileFactory.ocrProfile(ocrFiles.first(), ocrFiles.drop(1).first()),
+                    ),
+                translationEngine =
+                    LlamaTranslationEngine(
+                        runtime = AndroidLlamaRuntime(OfficialNativeLlamaBridge(this)),
+                        profile = LlamaProfileFactory.translationProfile(modelPaths.translationModelFile()),
+                    ),
                 sttEngine = FakeSpeechToTextEngine(),
                 ttsEngine = FakeTextToSpeechEngine(),
                 lowMemoryMode = true,
             )
         val chatViewModel = ChatViewModel(coordinator)
-        val modelPaths = LocalModelPaths(filesDir)
         val modelStore =
             FileBackedModelStore(
                 modelPacks = ModelRegistry.defaultPacks(),
@@ -57,6 +71,7 @@ class MainActivity : ComponentActivity() {
             XTranslateAppTheme {
                 val scope = rememberCoroutineScope()
                 var localTextTestStatus by remember { mutableStateOf<String?>(null) }
+                var localOcrTestStatus by remember { mutableStateOf<String?>(null) }
                 var importStatus by remember { mutableStateOf<String?>(null) }
                 var ocrImportStatus by remember { mutableStateOf<String?>(null) }
                 var speechImportStatus by remember { mutableStateOf<String?>(null) }
@@ -68,6 +83,42 @@ class MainActivity : ComponentActivity() {
                             modelPaths = modelPaths,
                             bridge = OfficialNativeLlamaBridge(this@MainActivity),
                         )
+                    }
+                val localOcrRunner =
+                    remember {
+                        LocalOcrRunner(
+                            modelPaths = modelPaths,
+                            bridge = OfficialNativeLlamaBridge(this@MainActivity),
+                        )
+                    }
+                val localOcrImagePicker =
+                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                        if (uri == null) {
+                            localOcrTestStatus = "OCR image selection cancelled"
+                            return@rememberLauncherForActivityResult
+                        }
+
+                        localOcrTestStatus = "Running local OCR test..."
+                        scope.launch {
+                            localOcrTestStatus =
+                                runCatching {
+                                    localOcrRunner.extractSampleImageText(uri.toString())
+                                }.fold(
+                                    onSuccess = { result -> "OCR result: $result" },
+                                    onFailure = { error -> "OCR error: ${error.message}" },
+                                )
+                        }
+                    }
+                val chatImagePicker =
+                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                        if (uri == null) {
+                            chatViewModel.updateComposer("Image selection cancelled.")
+                            return@rememberLauncherForActivityResult
+                        }
+
+                        scope.launch {
+                            chatViewModel.translateImage(ImageInput(uri = uri.toString()))
+                        }
                     }
                 val translationModelPicker =
                     rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -209,6 +260,9 @@ class MainActivity : ComponentActivity() {
                     chatViewModel = chatViewModel,
                     modelStore = modelStore,
                     modelPaths = modelPaths,
+                    onPickImage = {
+                        chatImagePicker.launch("image/*")
+                    },
                     onRunLocalTextTest = {
                         localTextTestStatus = "Running local text test..."
                         scope.launch {
@@ -217,8 +271,11 @@ class MainActivity : ComponentActivity() {
                                     .fold(
                                         onSuccess = { result -> "Result: $result" },
                                         onFailure = { error -> "Error: ${error.message}" },
-                                    )
+                            )
                         }
+                    },
+                    onRunLocalOcrTest = {
+                        localOcrImagePicker.launch("image/*")
                     },
                     onImportTranslationModel = {
                         translationModelPicker.launch("*/*")
@@ -236,6 +293,7 @@ class MainActivity : ComponentActivity() {
                         supertonicModelPicker.launch("*/*")
                     },
                     localTextTestStatus = localTextTestStatus,
+                    localOcrTestStatus = localOcrTestStatus,
                     importStatus = importStatus,
                     ocrImportStatus = ocrImportStatus,
                     speechImportStatus = speechImportStatus,

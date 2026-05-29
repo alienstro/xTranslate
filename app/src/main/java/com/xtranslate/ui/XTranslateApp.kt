@@ -26,13 +26,16 @@ fun XTranslateApp(
     chatViewModel: ChatViewModel,
     modelStore: ModelStore,
     modelPaths: LocalModelPaths,
+    onPickImage: () -> Unit,
     onRunLocalTextTest: () -> Unit,
+    onRunLocalOcrTest: () -> Unit,
     onImportTranslationModel: () -> Unit,
     onImportOcrModel: () -> Unit,
     onImportOcrProjector: () -> Unit,
     onImportWhisperModel: () -> Unit,
     onImportSupertonicModel: () -> Unit,
     localTextTestStatus: String?,
+    localOcrTestStatus: String?,
     importStatus: String?,
     ocrImportStatus: String?,
     speechImportStatus: String?,
@@ -69,13 +72,11 @@ fun XTranslateApp(
                     ChatScreen(
                         state = state,
                         onComposerChange = chatViewModel::updateComposer,
+                        onTargetLanguageChange = chatViewModel::updateTargetLanguage,
                         onSend = chatViewModel::sendText,
-                        onImage = {
-                            chatViewModel.updateComposer("Image flow will open camera/gallery in a later step.")
-                        },
-                        onMic = {
-                            chatViewModel.updateComposer("Voice flow will record audio in a later step.")
-                        },
+                        onImage = onPickImage,
+                        onMic = chatViewModel::transcribeVoicePlaceholder,
+                        onSpeakTranslation = chatViewModel::speakTranslationPlaceholder,
                     )
 
                 AppTab.Models ->
@@ -83,12 +84,14 @@ fun XTranslateApp(
                         modelStore = modelStore,
                         modelPaths = modelPaths,
                         onRunLocalTextTest = onRunLocalTextTest,
+                        onRunLocalOcrTest = onRunLocalOcrTest,
                         onImportTranslationModel = onImportTranslationModel,
                         onImportOcrModel = onImportOcrModel,
                         onImportOcrProjector = onImportOcrProjector,
                         onImportWhisperModel = onImportWhisperModel,
                         onImportSupertonicModel = onImportSupertonicModel,
                         localTextTestStatus = localTextTestStatus,
+                        localOcrTestStatus = localOcrTestStatus,
                         importStatus = importStatus,
                         ocrImportStatus = ocrImportStatus,
                         speechImportStatus = speechImportStatus,
