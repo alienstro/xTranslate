@@ -61,7 +61,7 @@ Create these files:
 - Create: `app/src/main/java/com/xtranslate/llama/LlamaRuntime.kt`
 - Test: no direct test; tested through adapters in later tasks.
 
-- [ ] **Step 1: Create runtime contract**
+- [x] **Step 1: Create runtime contract**
 
 Create `app/src/main/java/com/xtranslate/llama/LlamaRuntime.kt`:
 
@@ -104,7 +104,7 @@ data class LlamaRequest(
 )
 ```
 
-- [ ] **Step 2: Run compile check**
+- [x] **Step 2: Run compile check**
 
 Run:
 
@@ -114,7 +114,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 3: Commit runtime contract**
+- [x] **Step 3: Commit runtime contract**
 
 ```powershell
 git add app/src/main/java/com/xtranslate/llama/LlamaRuntime.kt
@@ -128,7 +128,7 @@ git commit -m "feat: add llama runtime contract"
 **Files:**
 - Create: `app/src/main/java/com/xtranslate/llama/FakeLlamaRuntime.kt`
 
-- [ ] **Step 1: Create fake runtime**
+- [x] **Step 1: Create fake runtime**
 
 Create `app/src/main/java/com/xtranslate/llama/FakeLlamaRuntime.kt`:
 
@@ -166,7 +166,7 @@ class FakeLlamaRuntime(
 }
 ```
 
-- [ ] **Step 2: Run compile check**
+- [x] **Step 2: Run compile check**
 
 Run:
 
@@ -176,7 +176,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 3: Commit fake runtime**
+- [x] **Step 3: Commit fake runtime**
 
 ```powershell
 git add app/src/main/java/com/xtranslate/llama/FakeLlamaRuntime.kt
@@ -191,7 +191,7 @@ git commit -m "test: add fake llama runtime"
 - Create: `app/src/main/java/com/xtranslate/llama/LlamaTranslationEngine.kt`
 - Create: `app/src/test/java/com/xtranslate/llama/LlamaTranslationEngineTest.kt`
 
-- [ ] **Step 1: Write failing translation adapter test**
+- [x] **Step 1: Write failing translation adapter test**
 
 Create `app/src/test/java/com/xtranslate/llama/LlamaTranslationEngineTest.kt`:
 
@@ -239,7 +239,7 @@ class LlamaTranslationEngineTest {
 }
 ```
 
-- [ ] **Step 2: Run test and verify failure**
+- [x] **Step 2: Run test and verify failure**
 
 Run:
 
@@ -249,7 +249,7 @@ Run:
 
 Expected: FAIL because `LlamaTranslationEngine` does not exist.
 
-- [ ] **Step 3: Add translation adapter**
+- [x] **Step 3: Add translation adapter**
 
 Create `app/src/main/java/com/xtranslate/llama/LlamaTranslationEngine.kt`:
 
@@ -287,7 +287,7 @@ class LlamaTranslationEngine(
 }
 ```
 
-- [ ] **Step 4: Run test and verify pass**
+- [x] **Step 4: Run test and verify pass**
 
 Run:
 
@@ -297,7 +297,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit translation adapter**
+- [x] **Step 5: Commit translation adapter**
 
 ```powershell
 git add app/src/main/java/com/xtranslate/llama app/src/test/java/com/xtranslate/llama/LlamaTranslationEngineTest.kt
@@ -312,7 +312,7 @@ git commit -m "feat: add llama translation adapter"
 - Create: `app/src/main/java/com/xtranslate/llama/LlamaOcrEngine.kt`
 - Create: `app/src/test/java/com/xtranslate/llama/LlamaOcrEngineTest.kt`
 
-- [ ] **Step 1: Write failing OCR adapter test**
+- [x] **Step 1: Write failing OCR adapter test**
 
 Create `app/src/test/java/com/xtranslate/llama/LlamaOcrEngineTest.kt`:
 
@@ -353,7 +353,7 @@ class LlamaOcrEngineTest {
 }
 ```
 
-- [ ] **Step 2: Run test and verify failure**
+- [x] **Step 2: Run test and verify failure**
 
 Run:
 
@@ -363,7 +363,7 @@ Run:
 
 Expected: FAIL because `LlamaOcrEngine` does not exist.
 
-- [ ] **Step 3: Add OCR adapter**
+- [x] **Step 3: Add OCR adapter**
 
 Create `app/src/main/java/com/xtranslate/llama/LlamaOcrEngine.kt`:
 
@@ -404,7 +404,7 @@ class LlamaOcrEngine(
 }
 ```
 
-- [ ] **Step 4: Run test and verify pass**
+- [x] **Step 4: Run test and verify pass**
 
 Run:
 
@@ -414,7 +414,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit OCR adapter**
+- [x] **Step 5: Commit OCR adapter**
 
 ```powershell
 git add app/src/main/java/com/xtranslate/llama app/src/test/java/com/xtranslate/llama/LlamaOcrEngineTest.kt
@@ -428,7 +428,7 @@ git commit -m "feat: add llama ocr adapter"
 **Files:**
 - Modify only files required to fix compile or test failures.
 
-- [ ] **Step 1: Run all llama adapter tests**
+- [x] **Step 1: Run all llama adapter tests**
 
 Run:
 
@@ -438,7 +438,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 2: Run all unit tests**
+- [x] **Step 2: Run all unit tests**
 
 Run:
 
@@ -448,7 +448,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 3: Run debug build**
+- [x] **Step 3: Run debug build**
 
 Run:
 
@@ -458,7 +458,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit verification fixes if any**
+- [x] **Step 4: Commit verification fixes if any**
 
 If fixes were needed:
 
