@@ -24,7 +24,9 @@ fun ModelsScreen(
     modelStore: ModelStore,
     modelPaths: LocalModelPaths,
     onRunLocalTextTest: () -> Unit,
+    onImportTranslationModel: () -> Unit,
     localTextTestStatus: String?,
+    importStatus: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -43,6 +45,12 @@ fun ModelsScreen(
             Text("Run local text test")
         }
         localTextTestStatus?.let { status ->
+            Text(text = status)
+        }
+        Button(onClick = onImportTranslationModel) {
+            Text("Import translation GGUF")
+        }
+        importStatus?.let { status ->
             Text(text = status)
         }
         modelStore.packs().forEach { pack ->

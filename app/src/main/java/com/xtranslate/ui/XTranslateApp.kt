@@ -27,7 +27,9 @@ fun XTranslateApp(
     modelStore: ModelStore,
     modelPaths: LocalModelPaths,
     onRunLocalTextTest: () -> Unit,
+    onImportTranslationModel: () -> Unit,
     localTextTestStatus: String?,
+    importStatus: String?,
 ) {
     val state by chatViewModel.state.collectAsState()
 
@@ -74,7 +76,9 @@ fun XTranslateApp(
                         modelStore = modelStore,
                         modelPaths = modelPaths,
                         onRunLocalTextTest = onRunLocalTextTest,
+                        onImportTranslationModel = onImportTranslationModel,
                         localTextTestStatus = localTextTestStatus,
+                        importStatus = importStatus,
                     )
             }
         }

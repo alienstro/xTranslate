@@ -2,8 +2,10 @@ package com.xtranslate
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -12,6 +14,7 @@ import androidx.compose.runtime.setValue
 import com.xtranslate.llama.LocalTextGenerationRunner
 import com.xtranslate.llama.nativebridge.OfficialNativeLlamaBridge
 import com.xtranslate.model.FileBackedModelStore
+import com.xtranslate.model.LocalModelImporter
 import com.xtranslate.model.LocalModelPaths
 import com.xtranslate.model.ModelRegistry
 import com.xtranslate.runtime.EngineCoordinator
@@ -22,7 +25,9 @@ import com.xtranslate.runtime.FakeTranslationEngine
 import com.xtranslate.ui.XTranslateApp
 import com.xtranslate.ui.chat.ChatViewModel
 import com.xtranslate.ui.theme.XTranslateAppTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Android entry point that wires the first app shell to fake local engines.
@@ -52,12 +57,38 @@ class MainActivity : ComponentActivity() {
             XTranslateAppTheme {
                 val scope = rememberCoroutineScope()
                 var localTextTestStatus by remember { mutableStateOf<String?>(null) }
+                var importStatus by remember { mutableStateOf<String?>(null) }
+                val localModelImporter = remember { LocalModelImporter(modelPaths) }
                 val localTextGenerationRunner =
                     remember {
                         LocalTextGenerationRunner(
                             modelPaths = modelPaths,
                             bridge = OfficialNativeLlamaBridge(this@MainActivity),
                         )
+                    }
+                val translationModelPicker =
+                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                        if (uri == null) {
+                            importStatus = "Import cancelled"
+                            return@rememberLauncherForActivityResult
+                        }
+
+                        importStatus = "Importing translation GGUF..."
+                        scope.launch {
+                            importStatus =
+                                runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        val inputStream =
+                                            requireNotNull(contentResolver.openInputStream(uri)) {
+                                                "Could not open selected file"
+                                            }
+                                        localModelImporter.importTranslationModel(inputStream)
+                                    }
+                                }.fold(
+                                    onSuccess = { file -> "Imported: ${file.name}" },
+                                    onFailure = { error -> "Import failed: ${error.message}" },
+                                )
+                        }
                     }
 
                 XTranslateApp(
@@ -72,10 +103,14 @@ class MainActivity : ComponentActivity() {
                                     .fold(
                                         onSuccess = { result -> "Result: $result" },
                                         onFailure = { error -> "Error: ${error.message}" },
-                                    )
+                            )
                         }
                     },
+                    onImportTranslationModel = {
+                        translationModelPicker.launch("*/*")
+                    },
                     localTextTestStatus = localTextTestStatus,
+                    importStatus = importStatus,
                 )
             }
         }
