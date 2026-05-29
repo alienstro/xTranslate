@@ -432,7 +432,7 @@ git commit -m "feat: add translation domain contracts"
 - Create: `app/src/main/java/com/xtranslate/model/ModelStore.kt`
 - Test: `app/src/test/java/com/xtranslate/model/ModelRegistryTest.kt`
 
-- [ ] **Step 1: Write failing model registry tests**
+- [x] **Step 1: Write failing model registry tests**
 
 Create `app/src/test/java/com/xtranslate/model/ModelRegistryTest.kt`:
 
@@ -470,7 +470,7 @@ class ModelRegistryTest {
 }
 ```
 
-- [ ] **Step 2: Run tests and verify failure**
+- [x] **Step 2: Run tests and verify failure**
 
 Run:
 
@@ -480,7 +480,7 @@ Run:
 
 Expected: FAIL because model registry classes do not exist.
 
-- [ ] **Step 3: Add model registry**
+- [x] **Step 3: Add model registry**
 
 Create `app/src/main/java/com/xtranslate/model/ModelRegistry.kt`:
 
@@ -557,7 +557,7 @@ object ModelRegistry {
 }
 ```
 
-- [ ] **Step 4: Add model store**
+- [x] **Step 4: Add model store**
 
 Create `app/src/main/java/com/xtranslate/model/ModelStore.kt`:
 
@@ -603,7 +603,7 @@ class InMemoryModelStore(
 }
 ```
 
-- [ ] **Step 5: Run model tests and verify pass**
+- [x] **Step 5: Run model tests and verify pass**
 
 Run:
 
@@ -613,7 +613,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit model registry**
+- [x] **Step 6: Commit model registry**
 
 ```bash
 git add app/src/main/java/com/xtranslate/model app/src/test/java/com/xtranslate/model/ModelRegistryTest.kt
@@ -629,7 +629,7 @@ git commit -m "feat: add model registry"
 - Create: `app/src/main/java/com/xtranslate/runtime/FakeEngines.kt`
 - Test: `app/src/test/java/com/xtranslate/runtime/EngineCoordinatorTest.kt`
 
-- [ ] **Step 1: Write failing coordinator tests**
+- [x] **Step 1: Write failing coordinator tests**
 
 Create `app/src/test/java/com/xtranslate/runtime/EngineCoordinatorTest.kt`:
 
@@ -683,7 +683,7 @@ class EngineCoordinatorTest {
 }
 ```
 
-- [ ] **Step 2: Run tests and verify failure**
+- [x] **Step 2: Run tests and verify failure**
 
 Run:
 
@@ -693,7 +693,7 @@ Run:
 
 Expected: FAIL because coordinator and fake engines do not exist.
 
-- [ ] **Step 3: Add fake engines**
+- [x] **Step 3: Add fake engines**
 
 Create `app/src/main/java/com/xtranslate/runtime/FakeEngines.kt`:
 
@@ -742,7 +742,7 @@ class FakeTextToSpeechEngine : TextToSpeechEngine {
 }
 ```
 
-- [ ] **Step 4: Add engine coordinator**
+- [x] **Step 4: Add engine coordinator**
 
 Create `app/src/main/java/com/xtranslate/runtime/EngineCoordinator.kt`:
 
@@ -825,7 +825,7 @@ class EngineCoordinator(
 }
 ```
 
-- [ ] **Step 5: Run coordinator tests and verify pass**
+- [x] **Step 5: Run coordinator tests and verify pass**
 
 Run:
 
@@ -835,7 +835,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit coordinator**
+- [x] **Step 6: Commit coordinator**
 
 ```bash
 git add app/src/main/java/com/xtranslate/runtime app/src/test/java/com/xtranslate/runtime/EngineCoordinatorTest.kt
