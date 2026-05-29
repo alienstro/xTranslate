@@ -1,6 +1,17 @@
 package com.xtranslate.ui.chat
 
 import com.xtranslate.domain.ImageInput
+import com.xtranslate.domain.OcrEngine
+import com.xtranslate.domain.OcrResult
+import com.xtranslate.domain.AudioInput
+import com.xtranslate.domain.AudioOutput
+import com.xtranslate.domain.SpeechRequest
+import com.xtranslate.domain.SpeechToTextEngine
+import com.xtranslate.domain.TextToSpeechEngine
+import com.xtranslate.domain.Transcript
+import com.xtranslate.domain.TranslationEngine
+import com.xtranslate.domain.TranslationRequest
+import com.xtranslate.domain.TranslationResult
 import com.xtranslate.runtime.EngineCoordinator
 import com.xtranslate.runtime.FakeOcrEngine
 import com.xtranslate.runtime.FakeSpeechToTextEngine
@@ -56,6 +67,22 @@ class ChatViewModelTest {
         }
 
     @Test
+    fun sendTextUsesSelectedTargetLanguage() =
+        runTest {
+            val viewModel = ChatViewModel(fakeCoordinator())
+
+            viewModel.updateTargetLanguage("Japanese")
+            viewModel.updateComposer("Hello")
+            viewModel.sendText()
+            advanceUntilIdle()
+
+            val translation = viewModel.state.value.messages.last()
+            assertEquals(ChatMessageKind.Translation, translation.kind)
+            assertEquals("Japanese", translation.language)
+            assertEquals("[Japanese] Hello", translation.text)
+        }
+
+    @Test
     fun translateImageAddsOcrReviewAndTranslationMessages() =
         runTest {
             val viewModel = ChatViewModel(fakeCoordinator())
@@ -67,12 +94,202 @@ class ChatViewModelTest {
             assertTrue(messages.any { it.kind == ChatMessageKind.Translation })
         }
 
-    private fun fakeCoordinator() =
+    @Test
+    fun sendTextFailureAddsSystemMessageAndClearsBusy() =
+        runTest {
+            val viewModel =
+                ChatViewModel(
+                    fakeCoordinator(
+                        translationEngine = FailingTranslationEngine("Missing translation model file"),
+                    ),
+                )
+
+            viewModel.updateComposer("Hello")
+            viewModel.sendText()
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Missing translation model file")
+                },
+            )
+            assertEquals(AppTab.Models, viewModel.state.value.selectedTab)
+        }
+
+    @Test
+    fun translateImageFailureAddsSystemMessageAndClearsBusy() =
+        runTest {
+            val viewModel =
+                ChatViewModel(
+                    fakeCoordinator(
+                        ocrEngine = FailingOcrEngine("Missing OCR model file"),
+                    ),
+                )
+
+            viewModel.translateImage(ImageInput("content://image"))
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Missing OCR model file")
+                },
+            )
+            assertEquals(AppTab.Models, viewModel.state.value.selectedTab)
+        }
+
+    @Test
+    fun nonModelFailureKeepsCurrentTab() =
+        runTest {
+            val viewModel =
+                ChatViewModel(
+                    fakeCoordinator(
+                        translationEngine = FailingTranslationEngine("Network should not be used"),
+                    ),
+                )
+
+            viewModel.updateComposer("Hello")
+            viewModel.sendText()
+            advanceUntilIdle()
+
+            assertEquals(AppTab.Chat, viewModel.state.value.selectedTab)
+        }
+
+    @Test
+    fun transcribeVoicePlaceholderPutsTranscriptInComposer() =
+        runTest {
+            val viewModel = ChatViewModel(fakeCoordinator())
+
+            viewModel.transcribeVoicePlaceholder()
+            advanceUntilIdle()
+
+            assertEquals("Voice transcript", viewModel.state.value.composerText)
+            assertEquals(false, viewModel.state.value.isBusy)
+        }
+
+    @Test
+    fun transcribeVoicePlaceholderFailureAddsSystemMessage() =
+        runTest {
+            val viewModel =
+                ChatViewModel(
+                    fakeCoordinator(
+                        sttEngine = FailingSpeechToTextEngine("Missing Whisper model file"),
+                    ),
+                )
+
+            viewModel.transcribeVoicePlaceholder()
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            assertEquals(AppTab.Models, viewModel.state.value.selectedTab)
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Missing Whisper model file")
+                },
+            )
+        }
+
+    @Test
+    fun speakTranslationPlaceholderAddsSystemMessage() =
+        runTest {
+            val viewModel = ChatViewModel(fakeCoordinator())
+            val message =
+                ChatMessage(
+                    id = 1L,
+                    kind = ChatMessageKind.Translation,
+                    text = "Kamusta",
+                    language = "Filipino",
+                )
+
+            viewModel.speakTranslationPlaceholder(message)
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Speech ready") &&
+                        it.text.contains("memory://tts/Filipino")
+                },
+            )
+        }
+
+    @Test
+    fun speakTranslationPlaceholderFailureAddsSystemMessage() =
+        runTest {
+            val viewModel =
+                ChatViewModel(
+                    fakeCoordinator(
+                        ttsEngine = FailingTextToSpeechEngine("Missing Supertonic model file"),
+                    ),
+                )
+            val message =
+                ChatMessage(
+                    id = 1L,
+                    kind = ChatMessageKind.Translation,
+                    text = "Hello",
+                    language = "English",
+                )
+
+            viewModel.speakTranslationPlaceholder(message)
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            assertEquals(AppTab.Models, viewModel.state.value.selectedTab)
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Missing Supertonic model file")
+                },
+            )
+        }
+
+    private fun fakeCoordinator(
+        ocrEngine: OcrEngine = FakeOcrEngine(text = "Image text"),
+        translationEngine: TranslationEngine = FakeTranslationEngine(),
+        sttEngine: SpeechToTextEngine = FakeSpeechToTextEngine(),
+        ttsEngine: TextToSpeechEngine = FakeTextToSpeechEngine(),
+    ) =
         EngineCoordinator(
-            ocrEngine = FakeOcrEngine(text = "Image text"),
-            translationEngine = FakeTranslationEngine(),
-            sttEngine = FakeSpeechToTextEngine(),
-            ttsEngine = FakeTextToSpeechEngine(),
+            ocrEngine = ocrEngine,
+            translationEngine = translationEngine,
+            sttEngine = sttEngine,
+            ttsEngine = ttsEngine,
             lowMemoryMode = true,
         )
+}
+
+private class FailingTranslationEngine(
+    private val message: String,
+) : TranslationEngine {
+    override suspend fun translate(request: TranslationRequest): TranslationResult {
+        error(message)
+    }
+}
+
+private class FailingOcrEngine(
+    private val message: String,
+) : OcrEngine {
+    override suspend fun extractText(image: ImageInput): OcrResult {
+        error(message)
+    }
+}
+
+private class FailingSpeechToTextEngine(
+    private val message: String,
+) : SpeechToTextEngine {
+    override suspend fun transcribe(audio: AudioInput): Transcript {
+        error(message)
+    }
+}
+
+private class FailingTextToSpeechEngine(
+    private val message: String,
+) : TextToSpeechEngine {
+    override suspend fun synthesize(request: SpeechRequest): AudioOutput {
+        error(message)
+    }
 }

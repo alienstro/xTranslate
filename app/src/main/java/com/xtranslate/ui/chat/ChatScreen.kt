@@ -12,12 +12,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,9 +36,11 @@ import androidx.compose.ui.unit.dp
 fun ChatScreen(
     state: ChatUiState,
     onComposerChange: (String) -> Unit,
+    onTargetLanguageChange: (String) -> Unit,
     onSend: () -> Unit,
     onImage: () -> Unit,
     onMic: () -> Unit,
+    onSpeakTranslation: (ChatMessage) -> Unit,
 ) {
     Column(
         modifier =
@@ -51,7 +60,10 @@ fun ChatScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(state.messages, key = { it.id }) { message ->
-                ChatMessageCard(message = message)
+                ChatMessageCard(
+                    message = message,
+                    onSpeakTranslation = onSpeakTranslation,
+                )
             }
         }
 
@@ -72,6 +84,10 @@ fun ChatScreen(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Type, speak, or add an image") },
                     minLines = 2,
+                )
+                TargetLanguagePicker(
+                    selectedLanguage = state.targetLanguage,
+                    onTargetLanguageChange = onTargetLanguageChange,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconButton(onClick = onImage) {
@@ -94,7 +110,57 @@ fun ChatScreen(
 }
 
 @Composable
-private fun ChatMessageCard(message: ChatMessage) {
+private fun TargetLanguagePicker(
+    selectedLanguage: String,
+    onTargetLanguageChange: (String) -> Unit,
+) {
+    val languages =
+        listOf(
+            "English",
+            "Filipino",
+            "Japanese",
+            "Korean",
+            "Chinese",
+            "Spanish",
+            "French",
+            "German",
+        )
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = "Target",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = { expanded = true }) {
+            Text(selectedLanguage)
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                languages.forEach { language ->
+                    DropdownMenuItem(
+                        text = { Text(language) },
+                        onClick = {
+                            onTargetLanguageChange(language)
+                            expanded = false
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatMessageCard(
+    message: ChatMessage,
+    onSpeakTranslation: (ChatMessage) -> Unit,
+) {
     val containerColor =
         when (message.kind) {
             ChatMessageKind.Source -> MaterialTheme.colorScheme.surface
@@ -112,11 +178,16 @@ private fun ChatMessageCard(message: ChatMessage) {
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = message.kind.name,
+                text = ChatMessageLabels.labelFor(message.kind),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(text = message.text)
+            if (message.kind == ChatMessageKind.Translation) {
+                TextButton(onClick = { onSpeakTranslation(message) }) {
+                    Text("Speak")
+                }
+            }
         }
     }
 }

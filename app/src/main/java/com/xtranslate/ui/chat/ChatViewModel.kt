@@ -2,7 +2,9 @@ package com.xtranslate.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.xtranslate.domain.AudioInput
 import com.xtranslate.domain.ImageInput
+import com.xtranslate.domain.SpeechRequest
 import com.xtranslate.domain.TranslationRequest
 import com.xtranslate.runtime.EngineCoordinator
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,44 +52,131 @@ class ChatViewModel(
         }
 
         viewModelScope.launch {
-            val targetLanguage = state.value.targetLanguage
-            val result =
+            runCatching {
                 engineCoordinator.translateText(
                     TranslationRequest(
                         sourceText = text,
-                        targetLanguage = targetLanguage,
+                        targetLanguage = state.value.targetLanguage,
                     ),
                 )
-            mutableState.update {
-                it.copy(
-                    isBusy = false,
-                    messages =
-                        it.messages +
-                            ChatMessage(
-                                id = nextId++,
-                                kind = ChatMessageKind.Translation,
-                                text = result.translatedText,
-                                language = result.targetLanguage,
-                            ),
-                )
-            }
+            }.fold(
+                onSuccess = { result ->
+                    mutableState.update {
+                        it.copy(
+                            isBusy = false,
+                            messages =
+                                it.messages +
+                                    ChatMessage(
+                                        id = nextId++,
+                                        kind = ChatMessageKind.Translation,
+                                        text = result.translatedText,
+                                        language = result.targetLanguage,
+                                    ),
+                        )
+                    }
+                },
+                onFailure = { error -> showError(error) },
+            )
         }
     }
 
     suspend fun translateImage(image: ImageInput) {
         mutableState.update { it.copy(isBusy = true) }
-        val result =
+        runCatching {
             engineCoordinator.translateImage(
                 image = image,
                 targetLanguage = state.value.targetLanguage,
             )
+        }.fold(
+            onSuccess = { result ->
+                mutableState.update {
+                    it.copy(
+                        isBusy = false,
+                        messages =
+                            it.messages +
+                                ChatMessage(nextId++, ChatMessageKind.OcrReview, result.sourceText) +
+                                ChatMessage(nextId++, ChatMessageKind.Translation, result.translatedText, result.targetLanguage),
+                    )
+                }
+            },
+            onFailure = { error -> showError(error) },
+        )
+    }
+
+    fun transcribeVoicePlaceholder() {
+        mutableState.update { it.copy(isBusy = true) }
+        viewModelScope.launch {
+            runCatching {
+                engineCoordinator.transcribe(
+                    AudioInput(
+                        uri = "memory://voice-placeholder",
+                        durationMillis = 0L,
+                    ),
+                )
+            }.fold(
+                onSuccess = { transcript ->
+                    mutableState.update {
+                        it.copy(
+                            isBusy = false,
+                            composerText = transcript,
+                        )
+                    }
+                },
+                onFailure = { error -> showError(error) },
+            )
+        }
+    }
+
+    fun speakTranslationPlaceholder(message: ChatMessage) {
+        if (message.kind != ChatMessageKind.Translation) return
+
+        mutableState.update { it.copy(isBusy = true) }
+        viewModelScope.launch {
+            runCatching {
+                engineCoordinator.speak(
+                    SpeechRequest(
+                        text = message.text,
+                        language = message.language ?: state.value.targetLanguage,
+                    ),
+                )
+            }.fold(
+                onSuccess = { audio ->
+                    mutableState.update {
+                        it.copy(
+                            isBusy = false,
+                            messages =
+                                it.messages +
+                                    ChatMessage(
+                                        id = nextId++,
+                                        kind = ChatMessageKind.System,
+                                        text = "Speech ready: ${audio.uri}",
+                                    ),
+                        )
+                    }
+                },
+                onFailure = { error -> showError(error) },
+            )
+        }
+    }
+
+    private fun showError(error: Throwable) {
+        val message = error.message ?: "Something went wrong."
         mutableState.update {
             it.copy(
                 isBusy = false,
+                selectedTab =
+                    if (message.contains("Missing") && message.contains("model file")) {
+                        AppTab.Models
+                    } else {
+                        it.selectedTab
+                    },
                 messages =
                     it.messages +
-                        ChatMessage(nextId++, ChatMessageKind.OcrReview, result.sourceText) +
-                        ChatMessage(nextId++, ChatMessageKind.Translation, result.translatedText, result.targetLanguage),
+                        ChatMessage(
+                            id = nextId++,
+                            kind = ChatMessageKind.System,
+                            text = message,
+                        ),
             )
         }
     }
