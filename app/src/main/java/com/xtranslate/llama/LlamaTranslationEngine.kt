@@ -5,6 +5,7 @@ import com.xtranslate.domain.TranslationEngine
 import com.xtranslate.domain.TranslationRequest
 import com.xtranslate.domain.TranslationResult
 import kotlinx.coroutines.flow.toList
+import java.io.File
 
 /**
  * Translation engine that sends prompts to a llama.cpp translation profile.
@@ -18,6 +19,10 @@ class LlamaTranslationEngine(
     private val profile: LlamaProfile,
 ) : TranslationEngine {
     override suspend fun translate(request: TranslationRequest): TranslationResult {
+        require(File(profile.modelPath).exists()) {
+            "Missing translation model file: ${profile.modelPath}"
+        }
+
         runtime.load(profile)
         val prompt = Prompts.translationPrompt(request)
         val text =
