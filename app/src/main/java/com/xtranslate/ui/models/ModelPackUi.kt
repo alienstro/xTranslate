@@ -27,6 +27,15 @@ object ModelPackUiFormatter {
             requiredFileLabels =
                 modelPaths
                     .modelFiles(pack)
-                    .map { file -> file.path.replace('\\', '/') },
+                    .map { file ->
+                        val path = file.path.replace('\\', '/')
+                        if (file.exists()) {
+                            "$path - Installed - ${formatBytes(file.length())}"
+                        } else {
+                            "$path - Missing"
+                        }
+                    },
         )
+
+    private fun formatBytes(bytes: Long): String = "$bytes B"
 }

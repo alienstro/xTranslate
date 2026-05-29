@@ -21,4 +21,17 @@ class LlamaProfileFactoryTest {
         assertTrue(profile.modelPath.replace('\\', '/').endsWith("/models/translation.gguf"))
         assertNull(profile.projectorPath)
     }
+
+    @Test
+    fun ocrProfileUsesVisionLlamaProfileWithProjector() {
+        val modelFile = File("/models/ocr/paddleocr-vl-1.5-q4.gguf")
+        val projectorFile = File("/models/ocr/paddleocr-vl-1.5-mmproj.gguf")
+
+        val profile = LlamaProfileFactory.ocrProfile(modelFile, projectorFile)
+
+        assertEquals("ocr.paddleocr-vl-1_5.q4", profile.id)
+        assertEquals(LlamaProfileKind.Ocr, profile.kind)
+        assertTrue(profile.modelPath.replace('\\', '/').endsWith("/models/ocr/paddleocr-vl-1.5-q4.gguf"))
+        assertTrue(profile.projectorPath?.replace('\\', '/')?.endsWith("/models/ocr/paddleocr-vl-1.5-mmproj.gguf") == true)
+    }
 }

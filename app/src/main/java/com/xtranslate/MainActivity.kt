@@ -59,6 +59,8 @@ class MainActivity : ComponentActivity() {
                 var localTextTestStatus by remember { mutableStateOf<String?>(null) }
                 var importStatus by remember { mutableStateOf<String?>(null) }
                 var ocrImportStatus by remember { mutableStateOf<String?>(null) }
+                var speechImportStatus by remember { mutableStateOf<String?>(null) }
+                var modelStateRefreshKey by remember { mutableStateOf(0) }
                 val localModelImporter = remember { LocalModelImporter(modelPaths) }
                 val localTextGenerationRunner =
                     remember {
@@ -86,7 +88,10 @@ class MainActivity : ComponentActivity() {
                                         localModelImporter.importTranslationModel(inputStream)
                                     }
                                 }.fold(
-                                    onSuccess = { file -> "Imported: ${file.name}" },
+                                    onSuccess = { file ->
+                                        modelStateRefreshKey += 1
+                                        "Imported: ${file.name}"
+                                    },
                                     onFailure = { error -> "Import failed: ${error.message}" },
                                 )
                         }
@@ -110,7 +115,10 @@ class MainActivity : ComponentActivity() {
                                         localModelImporter.importOcrModel(inputStream)
                                     }
                                 }.fold(
-                                    onSuccess = { file -> "Imported OCR model: ${file.name}" },
+                                    onSuccess = { file ->
+                                        modelStateRefreshKey += 1
+                                        "Imported OCR model: ${file.name}"
+                                    },
                                     onFailure = { error -> "OCR import failed: ${error.message}" },
                                 )
                         }
@@ -134,8 +142,65 @@ class MainActivity : ComponentActivity() {
                                         localModelImporter.importOcrProjector(inputStream)
                                     }
                                 }.fold(
-                                    onSuccess = { file -> "Imported OCR projector: ${file.name}" },
+                                    onSuccess = { file ->
+                                        modelStateRefreshKey += 1
+                                        "Imported OCR projector: ${file.name}"
+                                    },
                                     onFailure = { error -> "OCR import failed: ${error.message}" },
+                                )
+                        }
+                    }
+                val whisperModelPicker =
+                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                        if (uri == null) {
+                            speechImportStatus = "Speech import cancelled"
+                            return@rememberLauncherForActivityResult
+                        }
+
+                        speechImportStatus = "Importing Whisper STT..."
+                        scope.launch {
+                            speechImportStatus =
+                                runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        val inputStream =
+                                            requireNotNull(contentResolver.openInputStream(uri)) {
+                                                "Could not open selected file"
+                                            }
+                                        localModelImporter.importWhisperModel(inputStream)
+                                    }
+                                }.fold(
+                                    onSuccess = { file ->
+                                        modelStateRefreshKey += 1
+                                        "Imported Whisper STT: ${file.name}"
+                                    },
+                                    onFailure = { error -> "Speech import failed: ${error.message}" },
+                                )
+                        }
+                    }
+                val supertonicModelPicker =
+                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                        if (uri == null) {
+                            speechImportStatus = "Speech import cancelled"
+                            return@rememberLauncherForActivityResult
+                        }
+
+                        speechImportStatus = "Importing Supertonic TTS..."
+                        scope.launch {
+                            speechImportStatus =
+                                runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        val inputStream =
+                                            requireNotNull(contentResolver.openInputStream(uri)) {
+                                                "Could not open selected file"
+                                            }
+                                        localModelImporter.importSupertonicModel(inputStream)
+                                    }
+                                }.fold(
+                                    onSuccess = { file ->
+                                        modelStateRefreshKey += 1
+                                        "Imported Supertonic TTS: ${file.name}"
+                                    },
+                                    onFailure = { error -> "Speech import failed: ${error.message}" },
                                 )
                         }
                     }
@@ -164,9 +229,17 @@ class MainActivity : ComponentActivity() {
                     onImportOcrProjector = {
                         ocrProjectorPicker.launch("*/*")
                     },
+                    onImportWhisperModel = {
+                        whisperModelPicker.launch("*/*")
+                    },
+                    onImportSupertonicModel = {
+                        supertonicModelPicker.launch("*/*")
+                    },
                     localTextTestStatus = localTextTestStatus,
                     importStatus = importStatus,
                     ocrImportStatus = ocrImportStatus,
+                    speechImportStatus = speechImportStatus,
+                    modelStateRefreshKey = modelStateRefreshKey,
                 )
             }
         }

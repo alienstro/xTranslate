@@ -58,4 +58,34 @@ class LocalModelImporterTest {
         assertTrue(targetFile.path.replace('\\', '/').endsWith("/models/ocr/paddleocr-vl-1.5-mmproj.gguf"))
         assertEquals("fake projector gguf", targetFile.readText())
     }
+
+    @Test
+    fun importWhisperModelCopiesBytesIntoSttModelFile() {
+        val paths = LocalModelPaths(temporaryFolder.root)
+        val importer = LocalModelImporter(paths)
+
+        val targetFile =
+            importer.importWhisperModel(
+                ByteArrayInputStream("fake whisper bytes".toByteArray()),
+            )
+
+        assertEquals("whisper.bin", targetFile.name)
+        assertTrue(targetFile.path.replace('\\', '/').endsWith("/models/stt/whisper.bin"))
+        assertEquals("fake whisper bytes", targetFile.readText())
+    }
+
+    @Test
+    fun importSupertonicModelCopiesBytesIntoTtsModelFile() {
+        val paths = LocalModelPaths(temporaryFolder.root)
+        val importer = LocalModelImporter(paths)
+
+        val targetFile =
+            importer.importSupertonicModel(
+                ByteArrayInputStream("fake supertonic bytes".toByteArray()),
+            )
+
+        assertEquals("supertonic-3.onnx", targetFile.name)
+        assertTrue(targetFile.path.replace('\\', '/').endsWith("/models/tts/supertonic-3.onnx"))
+        assertEquals("fake supertonic bytes", targetFile.readText())
+    }
 }

@@ -13,4 +13,15 @@ object LlamaProfileFactory {
             modelPath = modelFile.absolutePath,
             projectorPath = null,
         )
+
+    fun ocrProfile(
+        modelFile: File,
+        projectorFile: File,
+    ): LlamaProfile =
+        LlamaProfile(
+            id = "ocr.paddleocr-vl-1_5.q4",
+            kind = LlamaProfileKind.Ocr,
+            modelPath = modelFile.absolutePath,
+            projectorPath = projectorFile.absolutePath,
+        )
 }

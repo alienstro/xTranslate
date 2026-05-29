@@ -30,9 +30,13 @@ fun XTranslateApp(
     onImportTranslationModel: () -> Unit,
     onImportOcrModel: () -> Unit,
     onImportOcrProjector: () -> Unit,
+    onImportWhisperModel: () -> Unit,
+    onImportSupertonicModel: () -> Unit,
     localTextTestStatus: String?,
     importStatus: String?,
     ocrImportStatus: String?,
+    speechImportStatus: String?,
+    modelStateRefreshKey: Int,
 ) {
     val state by chatViewModel.state.collectAsState()
 
@@ -82,9 +86,13 @@ fun XTranslateApp(
                         onImportTranslationModel = onImportTranslationModel,
                         onImportOcrModel = onImportOcrModel,
                         onImportOcrProjector = onImportOcrProjector,
+                        onImportWhisperModel = onImportWhisperModel,
+                        onImportSupertonicModel = onImportSupertonicModel,
                         localTextTestStatus = localTextTestStatus,
                         importStatus = importStatus,
                         ocrImportStatus = ocrImportStatus,
+                        speechImportStatus = speechImportStatus,
+                        modelStateRefreshKey = modelStateRefreshKey,
                     )
             }
         }
