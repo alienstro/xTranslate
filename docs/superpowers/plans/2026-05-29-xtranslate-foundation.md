@@ -65,7 +65,7 @@ Do not modify `.planning/PROJECT.md` in this plan. It is currently deleted in th
 - Create: `app/build.gradle.kts`
 - Create: `app/src/main/AndroidManifest.xml`
 
-- [ ] **Step 1: Create Gradle settings**
+- [x] **Step 1: Create Gradle settings**
 
 Create `settings.gradle.kts`:
 
@@ -90,7 +90,7 @@ rootProject.name = "xTranslate"
 include(":app")
 ```
 
-- [ ] **Step 2: Create root Gradle build file**
+- [x] **Step 2: Create root Gradle build file**
 
 Create `build.gradle.kts`:
 
@@ -103,7 +103,7 @@ plugins {
 }
 ```
 
-- [ ] **Step 3: Create Gradle properties**
+- [x] **Step 3: Create Gradle properties**
 
 Create `gradle.properties`:
 
@@ -114,7 +114,7 @@ android.nonTransitiveRClass=true
 kotlin.code.style=official
 ```
 
-- [ ] **Step 4: Create app module build file**
+- [x] **Step 4: Create app module build file**
 
 Create `app/build.gradle.kts`:
 
@@ -186,7 +186,7 @@ dependencies {
 }
 ```
 
-- [ ] **Step 5: Create Android manifest**
+- [x] **Step 5: Create Android manifest**
 
 Create `app/src/main/AndroidManifest.xml`:
 
@@ -213,7 +213,7 @@ Create `app/src/main/AndroidManifest.xml`:
 </manifest>
 ```
 
-- [ ] **Step 6: Add temporary theme resource**
+- [x] **Step 6: Add temporary theme resource**
 
 Create `app/src/main/res/values/styles.xml`:
 
@@ -223,7 +223,7 @@ Create `app/src/main/res/values/styles.xml`:
 </resources>
 ```
 
-- [ ] **Step 7: Run scaffold verification**
+- [x] **Step 7: Run scaffold verification**
 
 Run:
 
@@ -238,7 +238,7 @@ gradle wrapper
 ./gradlew :app:tasks
 ```
 
-- [ ] **Step 8: Commit scaffold**
+- [x] **Step 8: Commit scaffold**
 
 ```bash
 git add settings.gradle.kts build.gradle.kts gradle.properties app/build.gradle.kts app/src/main/AndroidManifest.xml app/src/main/res/values/styles.xml
@@ -255,7 +255,7 @@ git commit -m "chore: scaffold android app"
 - Create: `app/src/main/java/com/xtranslate/domain/Prompts.kt`
 - Test: `app/src/test/java/com/xtranslate/domain/PromptsTest.kt`
 
-- [ ] **Step 1: Write failing prompt tests**
+- [x] **Step 1: Write failing prompt tests**
 
 Create `app/src/test/java/com/xtranslate/domain/PromptsTest.kt`:
 
@@ -292,7 +292,7 @@ class PromptsTest {
 }
 ```
 
-- [ ] **Step 2: Run tests and verify failure**
+- [x] **Step 2: Run tests and verify failure**
 
 Run:
 
@@ -302,7 +302,7 @@ Run:
 
 Expected: FAIL because `Prompts`, `TranslationRequest`, and related domain types do not exist.
 
-- [ ] **Step 3: Add shared domain types**
+- [x] **Step 3: Add shared domain types**
 
 Create `app/src/main/java/com/xtranslate/domain/Types.kt`:
 
@@ -352,7 +352,7 @@ data class AudioOutput(
 )
 ```
 
-- [ ] **Step 4: Add engine interfaces**
+- [x] **Step 4: Add engine interfaces**
 
 Create `app/src/main/java/com/xtranslate/domain/Engines.kt`:
 
@@ -376,7 +376,7 @@ interface TextToSpeechEngine {
 }
 ```
 
-- [ ] **Step 5: Add prompt construction**
+- [x] **Step 5: Add prompt construction**
 
 Create `app/src/main/java/com/xtranslate/domain/Prompts.kt`:
 
@@ -406,7 +406,7 @@ object Prompts {
 }
 ```
 
-- [ ] **Step 6: Run prompt tests and verify pass**
+- [x] **Step 6: Run prompt tests and verify pass**
 
 Run:
 
@@ -416,7 +416,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit domain contracts**
+- [x] **Step 7: Commit domain contracts**
 
 ```bash
 git add app/src/main/java/com/xtranslate/domain app/src/test/java/com/xtranslate/domain/PromptsTest.kt

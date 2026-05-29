@@ -3,6 +3,12 @@ package com.xtranslate.domain
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Tests for the prompt text used by the AI models.
+ *
+ * These tests make sure the OCR prompt still says not to translate, and the
+ * translation prompt still includes the source text and target language.
+ */
 class PromptsTest {
     @Test
     fun ocrPromptRequestsPlainExtractedText() {
