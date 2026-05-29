@@ -24,6 +24,8 @@ import com.xtranslate.ui.models.ModelsScreen
 fun XTranslateApp(
     chatViewModel: ChatViewModel,
     modelStore: ModelStore,
+    onRunLocalTextTest: () -> Unit,
+    localTextTestStatus: String?,
 ) {
     val state by chatViewModel.state.collectAsState()
 
@@ -65,7 +67,12 @@ fun XTranslateApp(
                         },
                     )
 
-                AppTab.Models -> ModelsScreen(modelStore = modelStore)
+                AppTab.Models ->
+                    ModelsScreen(
+                        modelStore = modelStore,
+                        onRunLocalTextTest = onRunLocalTextTest,
+                        localTextTestStatus = localTextTestStatus,
+                    )
             }
         }
     }

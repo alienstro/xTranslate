@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,6 +21,8 @@ import com.xtranslate.model.ModelStore
 @Composable
 fun ModelsScreen(
     modelStore: ModelStore,
+    onRunLocalTextTest: () -> Unit,
+    localTextTestStatus: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -34,6 +37,12 @@ fun ModelsScreen(
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
         )
+        Button(onClick = onRunLocalTextTest) {
+            Text("Run local text test")
+        }
+        localTextTestStatus?.let { status ->
+            Text(text = status)
+        }
         modelStore.packs().forEach { pack ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(
