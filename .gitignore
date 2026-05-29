@@ -1,1 +1,7 @@
 .superpowers/
+.gradle/
+.idea/
+build/
+local.properties
+gradle/gradle-daemon-jvm.properties
+*.iml
