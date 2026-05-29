@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.xtranslate.model.LocalModelPaths
 import com.xtranslate.model.ModelStore
 import com.xtranslate.ui.chat.AppTab
 import com.xtranslate.ui.chat.ChatScreen
@@ -24,6 +25,7 @@ import com.xtranslate.ui.models.ModelsScreen
 fun XTranslateApp(
     chatViewModel: ChatViewModel,
     modelStore: ModelStore,
+    modelPaths: LocalModelPaths,
     onRunLocalTextTest: () -> Unit,
     localTextTestStatus: String?,
 ) {
@@ -70,6 +72,7 @@ fun XTranslateApp(
                 AppTab.Models ->
                     ModelsScreen(
                         modelStore = modelStore,
+                        modelPaths = modelPaths,
                         onRunLocalTextTest = onRunLocalTextTest,
                         localTextTestStatus = localTextTestStatus,
                     )

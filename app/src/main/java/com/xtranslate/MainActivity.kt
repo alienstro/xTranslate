@@ -41,10 +41,11 @@ class MainActivity : ComponentActivity() {
                 lowMemoryMode = true,
             )
         val chatViewModel = ChatViewModel(coordinator)
+        val modelPaths = LocalModelPaths(filesDir)
         val modelStore =
             FileBackedModelStore(
                 modelPacks = ModelRegistry.defaultPacks(),
-                modelPaths = LocalModelPaths(filesDir),
+                modelPaths = modelPaths,
             )
 
         setContent {
@@ -54,7 +55,7 @@ class MainActivity : ComponentActivity() {
                 val localTextGenerationRunner =
                     remember {
                         LocalTextGenerationRunner(
-                            modelPaths = LocalModelPaths(filesDir),
+                            modelPaths = modelPaths,
                             bridge = OfficialNativeLlamaBridge(this@MainActivity),
                         )
                     }
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
                 XTranslateApp(
                     chatViewModel = chatViewModel,
                     modelStore = modelStore,
+                    modelPaths = modelPaths,
                     onRunLocalTextTest = {
                         localTextTestStatus = "Running local text test..."
                         scope.launch {

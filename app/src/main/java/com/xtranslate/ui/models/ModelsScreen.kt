@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.xtranslate.model.LocalModelPaths
 import com.xtranslate.model.ModelStore
 
 /**
@@ -21,6 +22,7 @@ import com.xtranslate.model.ModelStore
 @Composable
 fun ModelsScreen(
     modelStore: ModelStore,
+    modelPaths: LocalModelPaths,
     onRunLocalTextTest: () -> Unit,
     localTextTestStatus: String?,
     modifier: Modifier = Modifier,
@@ -44,14 +46,25 @@ fun ModelsScreen(
             Text(text = status)
         }
         modelStore.packs().forEach { pack ->
+            val uiModel =
+                ModelPackUiFormatter.format(
+                    pack = pack,
+                    state = modelStore.state(pack.id),
+                    modelPaths = modelPaths,
+                )
+
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier.padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Text(text = pack.displayName, fontWeight = FontWeight.SemiBold)
-                    Text(text = "Engine: ${pack.engineType}")
-                    Text(text = "State: ${modelStore.state(pack.id)}")
+                    Text(text = uiModel.displayName, fontWeight = FontWeight.SemiBold)
+                    Text(text = uiModel.engineLabel)
+                    Text(text = uiModel.stateLabel)
+                    Text(text = "Required files")
+                    uiModel.requiredFileLabels.forEach { fileLabel ->
+                        Text(text = fileLabel)
+                    }
                     Text(text = "Loaded only when used")
                 }
             }
