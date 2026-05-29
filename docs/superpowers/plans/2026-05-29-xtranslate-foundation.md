@@ -1376,7 +1376,7 @@ git commit -m "feat: add mobile chat ui"
 **Files:**
 - Modify only files required to fix compile or test failures from this task.
 
-- [ ] **Step 1: Run all unit tests**
+- [x] **Step 1: Run all unit tests**
 
 Run:
 
@@ -1386,7 +1386,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 2: Run debug build**
+- [x] **Step 2: Run debug build**
 
 Run:
 
@@ -1396,7 +1396,7 @@ Run:
 
 Expected: PASS and an APK under `app/build/outputs/apk/debug/`.
 
-- [ ] **Step 3: Inspect git state**
+- [x] **Step 3: Inspect git state**
 
 Run:
 
@@ -1406,7 +1406,7 @@ git status --short
 
 Expected: only intentional files modified. `.planning/PROJECT.md` may still show as deleted from pre-existing state; do not stage it.
 
-- [ ] **Step 4: Commit verification fixes if any**
+- [x] **Step 4: Commit verification fixes if any**
 
 If Step 1 or Step 2 required source fixes:
 
