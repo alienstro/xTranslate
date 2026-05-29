@@ -1,4 +1,3 @@
-include(":app")
 pluginManagement {
       repositories {
           google()
@@ -17,3 +16,6 @@ pluginManagement {
 
   rootProject.name = "xTranslate"
   include(":app")
+
+  include(":llamaAndroidLib")
+  project(":llamaAndroidLib").projectDir = file("third_party/llama.cpp/examples/llama.android/lib")
