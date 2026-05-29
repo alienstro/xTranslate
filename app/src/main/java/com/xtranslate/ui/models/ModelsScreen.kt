@@ -25,8 +25,11 @@ fun ModelsScreen(
     modelPaths: LocalModelPaths,
     onRunLocalTextTest: () -> Unit,
     onImportTranslationModel: () -> Unit,
+    onImportOcrModel: () -> Unit,
+    onImportOcrProjector: () -> Unit,
     localTextTestStatus: String?,
     importStatus: String?,
+    ocrImportStatus: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -50,7 +53,16 @@ fun ModelsScreen(
         Button(onClick = onImportTranslationModel) {
             Text("Import translation GGUF")
         }
+        Button(onClick = onImportOcrModel) {
+            Text("Import OCR GGUF")
+        }
+        Button(onClick = onImportOcrProjector) {
+            Text("Import OCR projector")
+        }
         importStatus?.let { status ->
+            Text(text = status)
+        }
+        ocrImportStatus?.let { status ->
             Text(text = status)
         }
         modelStore.packs().forEach { pack ->

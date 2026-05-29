@@ -28,8 +28,11 @@ fun XTranslateApp(
     modelPaths: LocalModelPaths,
     onRunLocalTextTest: () -> Unit,
     onImportTranslationModel: () -> Unit,
+    onImportOcrModel: () -> Unit,
+    onImportOcrProjector: () -> Unit,
     localTextTestStatus: String?,
     importStatus: String?,
+    ocrImportStatus: String?,
 ) {
     val state by chatViewModel.state.collectAsState()
 
@@ -77,8 +80,11 @@ fun XTranslateApp(
                         modelPaths = modelPaths,
                         onRunLocalTextTest = onRunLocalTextTest,
                         onImportTranslationModel = onImportTranslationModel,
+                        onImportOcrModel = onImportOcrModel,
+                        onImportOcrProjector = onImportOcrProjector,
                         localTextTestStatus = localTextTestStatus,
                         importStatus = importStatus,
+                        ocrImportStatus = ocrImportStatus,
                     )
             }
         }

@@ -58,6 +58,7 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 var localTextTestStatus by remember { mutableStateOf<String?>(null) }
                 var importStatus by remember { mutableStateOf<String?>(null) }
+                var ocrImportStatus by remember { mutableStateOf<String?>(null) }
                 val localModelImporter = remember { LocalModelImporter(modelPaths) }
                 val localTextGenerationRunner =
                     remember {
@@ -90,6 +91,54 @@ class MainActivity : ComponentActivity() {
                                 )
                         }
                     }
+                val ocrModelPicker =
+                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                        if (uri == null) {
+                            ocrImportStatus = "OCR import cancelled"
+                            return@rememberLauncherForActivityResult
+                        }
+
+                        ocrImportStatus = "Importing OCR GGUF..."
+                        scope.launch {
+                            ocrImportStatus =
+                                runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        val inputStream =
+                                            requireNotNull(contentResolver.openInputStream(uri)) {
+                                                "Could not open selected file"
+                                            }
+                                        localModelImporter.importOcrModel(inputStream)
+                                    }
+                                }.fold(
+                                    onSuccess = { file -> "Imported OCR model: ${file.name}" },
+                                    onFailure = { error -> "OCR import failed: ${error.message}" },
+                                )
+                        }
+                    }
+                val ocrProjectorPicker =
+                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                        if (uri == null) {
+                            ocrImportStatus = "OCR import cancelled"
+                            return@rememberLauncherForActivityResult
+                        }
+
+                        ocrImportStatus = "Importing OCR projector..."
+                        scope.launch {
+                            ocrImportStatus =
+                                runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        val inputStream =
+                                            requireNotNull(contentResolver.openInputStream(uri)) {
+                                                "Could not open selected file"
+                                            }
+                                        localModelImporter.importOcrProjector(inputStream)
+                                    }
+                                }.fold(
+                                    onSuccess = { file -> "Imported OCR projector: ${file.name}" },
+                                    onFailure = { error -> "OCR import failed: ${error.message}" },
+                                )
+                        }
+                    }
 
                 XTranslateApp(
                     chatViewModel = chatViewModel,
@@ -103,14 +152,21 @@ class MainActivity : ComponentActivity() {
                                     .fold(
                                         onSuccess = { result -> "Result: $result" },
                                         onFailure = { error -> "Error: ${error.message}" },
-                            )
+                                    )
                         }
                     },
                     onImportTranslationModel = {
                         translationModelPicker.launch("*/*")
                     },
+                    onImportOcrModel = {
+                        ocrModelPicker.launch("*/*")
+                    },
+                    onImportOcrProjector = {
+                        ocrProjectorPicker.launch("*/*")
+                    },
                     localTextTestStatus = localTextTestStatus,
                     importStatus = importStatus,
+                    ocrImportStatus = ocrImportStatus,
                 )
             }
         }
