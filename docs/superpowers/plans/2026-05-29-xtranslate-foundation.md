@@ -1066,7 +1066,7 @@ git commit -m "feat: add chat workflow state"
 - Create: `app/src/main/java/com/xtranslate/ui/chat/ChatScreen.kt`
 - Create: `app/src/main/java/com/xtranslate/ui/models/ModelsScreen.kt`
 
-- [ ] **Step 1: Add app theme**
+- [x] **Step 1: Add app theme**
 
 Create `app/src/main/java/com/xtranslate/ui/theme/Theme.kt`:
 
@@ -1102,7 +1102,7 @@ fun XTranslateTheme(content: @Composable () -> Unit) {
 }
 ```
 
-- [ ] **Step 2: Add chat screen**
+- [x] **Step 2: Add chat screen**
 
 Create `app/src/main/java/com/xtranslate/ui/chat/ChatScreen.kt`:
 
@@ -1188,7 +1188,7 @@ fun ChatScreen(
 }
 ```
 
-- [ ] **Step 3: Add models screen**
+- [x] **Step 3: Add models screen**
 
 Create `app/src/main/java/com/xtranslate/ui/models/ModelsScreen.kt`:
 
@@ -1233,7 +1233,7 @@ fun ModelsScreen(
 }
 ```
 
-- [ ] **Step 4: Add app shell**
+- [x] **Step 4: Add app shell**
 
 Create `app/src/main/java/com/xtranslate/ui/XTranslateApp.kt`:
 
@@ -1305,7 +1305,7 @@ fun XTranslateApp(
 }
 ```
 
-- [ ] **Step 5: Add activity entrypoint**
+- [x] **Step 5: Add activity entrypoint**
 
 Create `app/src/main/java/com/xtranslate/MainActivity.kt`:
 
@@ -1352,7 +1352,7 @@ class MainActivity : ComponentActivity() {
 }
 ```
 
-- [ ] **Step 6: Run compile verification**
+- [x] **Step 6: Run compile verification**
 
 Run:
 
@@ -1362,7 +1362,7 @@ Run:
 
 Expected: PASS. If Compose complains about missing imports or unused variables, fix only the compile error and rerun.
 
-- [ ] **Step 7: Commit Compose UI**
+- [x] **Step 7: Commit Compose UI**
 
 ```bash
 git add app/src/main/java/com/xtranslate/MainActivity.kt app/src/main/java/com/xtranslate/ui
