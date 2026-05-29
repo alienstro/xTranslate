@@ -11,7 +11,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.xtranslate.llama.LocalTextGenerationRunner
 import com.xtranslate.llama.nativebridge.OfficialNativeLlamaBridge
-import com.xtranslate.model.InMemoryModelStore
+import com.xtranslate.model.FileBackedModelStore
 import com.xtranslate.model.LocalModelPaths
 import com.xtranslate.model.ModelRegistry
 import com.xtranslate.runtime.EngineCoordinator
@@ -41,7 +41,11 @@ class MainActivity : ComponentActivity() {
                 lowMemoryMode = true,
             )
         val chatViewModel = ChatViewModel(coordinator)
-        val modelStore = InMemoryModelStore(ModelRegistry.defaultPacks())
+        val modelStore =
+            FileBackedModelStore(
+                modelPacks = ModelRegistry.defaultPacks(),
+                modelPaths = LocalModelPaths(filesDir),
+            )
 
         setContent {
             XTranslateAppTheme {

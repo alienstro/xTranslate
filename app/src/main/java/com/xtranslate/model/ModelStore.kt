@@ -49,3 +49,39 @@ class InMemoryModelStore(
         states[modelId] = ModelInstallState.Failed
     }
 }
+
+class FileBackedModelStore(
+    private val modelPacks: List<ModelPack>,
+    private val modelPaths: LocalModelPaths,
+) : ModelStore {
+    private val temporaryStates = mutableMapOf<String, ModelInstallState>()
+
+    override fun packs(): List<ModelPack> = modelPacks
+
+    override fun state(modelId: String): ModelInstallState {
+        val temporaryState = temporaryStates[modelId]
+        if (temporaryState == ModelInstallState.Downloading || temporaryState == ModelInstallState.Failed) {
+            return temporaryState
+        }
+
+        val pack = modelPacks.firstOrNull { it.id == modelId } ?: return ModelInstallState.Missing
+        val requiredFiles = pack.files.filter { it.required }
+        return if (requiredFiles.all { file -> modelPaths.modelFile(pack, file).exists() }) {
+            ModelInstallState.Installed
+        } else {
+            ModelInstallState.Missing
+        }
+    }
+
+    override fun markDownloading(modelId: String) {
+        temporaryStates[modelId] = ModelInstallState.Downloading
+    }
+
+    override fun markInstalled(modelId: String) {
+        temporaryStates.remove(modelId)
+    }
+
+    override fun markFailed(modelId: String) {
+        temporaryStates[modelId] = ModelInstallState.Failed
+    }
+}

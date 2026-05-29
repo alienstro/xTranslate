@@ -3,6 +3,8 @@ package com.xtranslate.model
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import org.junit.Rule
 
 /**
  * Tests for the app's model list and model install state.
@@ -12,6 +14,9 @@ import org.junit.Test
  * the temporary in-memory model store can track download and install changes.
  */
 class ModelRegistryTest {
+    @get:Rule
+    val temporaryFolder = TemporaryFolder()
+
     @Test
     fun defaultRegistryContainsFourModelPacks() {
         val packs = ModelRegistry.defaultPacks()
@@ -34,5 +39,36 @@ class ModelRegistryTest {
 
         store.markInstalled("translation.multilingual.gguf")
         assertEquals(ModelInstallState.Installed, store.state("translation.multilingual.gguf"))
+    }
+
+    @Test
+    fun fileBackedStoreReportsMissingUntilRequiredFilesExist() {
+        val paths = LocalModelPaths(temporaryFolder.root)
+        val packs = ModelRegistry.defaultPacks()
+        val store = FileBackedModelStore(packs, paths)
+        val translationPack = packs.first { it.id == "translation.multilingual.gguf" }
+        val translationFile = paths.modelFiles(translationPack).single()
+
+        assertEquals(ModelInstallState.Missing, store.state("translation.multilingual.gguf"))
+
+        translationFile.parentFile?.mkdirs()
+        translationFile.writeText("fake model")
+
+        assertEquals(ModelInstallState.Installed, store.state("translation.multilingual.gguf"))
+    }
+
+    @Test
+    fun fileBackedStoreKeepsTemporaryDownloadAndFailureStates() {
+        val store =
+            FileBackedModelStore(
+                modelPacks = ModelRegistry.defaultPacks(),
+                modelPaths = LocalModelPaths(temporaryFolder.root),
+            )
+
+        store.markDownloading("translation.multilingual.gguf")
+        assertEquals(ModelInstallState.Downloading, store.state("translation.multilingual.gguf"))
+
+        store.markFailed("translation.multilingual.gguf")
+        assertEquals(ModelInstallState.Failed, store.state("translation.multilingual.gguf"))
     }
 }
