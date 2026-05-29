@@ -851,7 +851,7 @@ git commit -m "feat: add lazy engine coordinator"
 - Create: `app/src/main/java/com/xtranslate/ui/chat/ChatViewModel.kt`
 - Test: `app/src/test/java/com/xtranslate/ui/chat/ChatViewModelTest.kt`
 
-- [ ] **Step 1: Write failing chat workflow tests**
+- [x] **Step 1: Write failing chat workflow tests**
 
 Create `app/src/test/java/com/xtranslate/ui/chat/ChatViewModelTest.kt`:
 
@@ -904,7 +904,7 @@ class ChatViewModelTest {
 }
 ```
 
-- [ ] **Step 2: Run tests and verify failure**
+- [x] **Step 2: Run tests and verify failure**
 
 Run:
 
@@ -914,7 +914,7 @@ Run:
 
 Expected: FAIL because chat state and ViewModel do not exist.
 
-- [ ] **Step 3: Add chat state models**
+- [x] **Step 3: Add chat state models**
 
 Create `app/src/main/java/com/xtranslate/ui/chat/ChatModels.kt`:
 
@@ -949,7 +949,7 @@ enum class AppTab {
 }
 ```
 
-- [ ] **Step 4: Add chat ViewModel**
+- [x] **Step 4: Add chat ViewModel**
 
 Create `app/src/main/java/com/xtranslate/ui/chat/ChatViewModel.kt`:
 
@@ -1038,7 +1038,7 @@ class ChatViewModel(
 }
 ```
 
-- [ ] **Step 5: Run chat workflow tests and verify pass**
+- [x] **Step 5: Run chat workflow tests and verify pass**
 
 Run:
 
@@ -1048,7 +1048,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit chat workflow**
+- [x] **Step 6: Commit chat workflow**
 
 ```bash
 git add app/src/main/java/com/xtranslate/ui/chat/ChatModels.kt app/src/main/java/com/xtranslate/ui/chat/ChatViewModel.kt app/src/test/java/com/xtranslate/ui/chat/ChatViewModelTest.kt
