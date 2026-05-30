@@ -344,6 +344,22 @@ class ChatViewModelTest {
             )
         }
 
+    @Test
+    fun showVoiceErrorAddsSystemMessage() =
+        runTest {
+            val viewModel = ChatViewModel(fakeCoordinator())
+
+            viewModel.showVoiceError("Voice recording failed: Permission denied")
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text == "Voice recording failed: Permission denied"
+                },
+            )
+        }
+
     private fun fakeCoordinator(
         ocrEngine: OcrEngine = FakeOcrEngine(text = "Image text"),
         translationEngine: TranslationEngine = FakeTranslationEngine(),

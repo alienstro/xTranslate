@@ -174,6 +174,15 @@ class ChatViewModel(
         }
     }
 
+    fun showVoiceError(message: String) {
+        mutableState.update {
+            it.copy(
+                isBusy = false,
+                messages = it.messages + ChatMessage(nextId++, ChatMessageKind.System, message),
+            )
+        }
+    }
+
     private fun showError(error: Throwable) {
         val message = error.message ?: "Local AI error: ${error::class.java.simpleName}"
         mutableState.update {
