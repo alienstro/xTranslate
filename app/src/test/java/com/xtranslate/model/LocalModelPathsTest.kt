@@ -40,4 +40,19 @@ class LocalModelPathsTest {
             paths.modelFiles(ocrPack).map { it.path.replace('\\', '/') },
         )
     }
+
+    @Test
+    fun speechModelPathsUseAppPrivateSpeechDirectories() {
+        val filesDir = File("/data/user/0/com.xtranslate/files")
+        val paths = LocalModelPaths(filesDir)
+
+        assertEquals(
+            "/data/user/0/com.xtranslate/files/models/stt/whisper.bin",
+            paths.whisperModelFile().path.replace('\\', '/'),
+        )
+        assertEquals(
+            "/data/user/0/com.xtranslate/files/models/tts/supertonic-3.onnx",
+            paths.supertonicModelFile().path.replace('\\', '/'),
+        )
+    }
 }

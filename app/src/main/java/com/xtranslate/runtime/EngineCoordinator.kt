@@ -39,7 +39,14 @@ class EngineCoordinator(
 
     suspend fun translateText(request: TranslationRequest): TranslationResult {
         load(LoadedEngine.Translation)
-        return translationEngine.translate(request)
+        return try {
+            translationEngine.translate(request)
+        } catch (error: Throwable) {
+            if (lowMemoryMode) {
+                unload(LoadedEngine.Translation)
+            }
+            throw error
+        }
     }
 
     suspend fun translateImage(
@@ -48,11 +55,14 @@ class EngineCoordinator(
         sourceLanguage: String? = null,
     ): TranslationResult {
         load(LoadedEngine.Ocr)
-        val ocr = ocrEngine.extractText(image)
-
-        if (lowMemoryMode) {
-            unload(LoadedEngine.Ocr)
-        }
+        val ocr =
+            try {
+                ocrEngine.extractText(image)
+            } finally {
+                if (lowMemoryMode) {
+                    unload(LoadedEngine.Ocr)
+                }
+            }
 
         return translateText(
             TranslationRequest(
@@ -65,18 +75,30 @@ class EngineCoordinator(
 
     suspend fun transcribe(audio: AudioInput): String {
         load(LoadedEngine.Stt)
-        val transcript = sttEngine.transcribe(audio).text
-
-        if (lowMemoryMode) {
-            unload(LoadedEngine.Stt)
-        }
+        val transcript =
+            try {
+                sttEngine.transcribe(audio).text
+            } finally {
+                if (lowMemoryMode) {
+                    unload(LoadedEngine.Stt)
+                }
+            }
 
         return transcript
     }
 
     suspend fun speak(request: SpeechRequest): AudioOutput {
         load(LoadedEngine.Tts)
-        return ttsEngine.synthesize(request)
+        val audio =
+            try {
+                ttsEngine.synthesize(request)
+            } finally {
+                if (lowMemoryMode) {
+                    unload(LoadedEngine.Tts)
+                }
+            }
+
+        return audio
     }
 
     fun unloadIdle() {
@@ -84,6 +106,9 @@ class EngineCoordinator(
     }
 
     private fun load(engine: LoadedEngine) {
+        if (lowMemoryMode) {
+            mutableLoadedEngines.clear()
+        }
         mutableLoadedEngines.add(engine)
     }
 

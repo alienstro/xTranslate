@@ -10,6 +10,10 @@ class LocalModelPaths(
 ) {
     fun translationModelFile(): File = File(filesDir, "models/translation/multilingual-translator.gguf")
 
+    fun whisperModelFile(): File = File(filesDir, "models/stt/whisper.bin")
+
+    fun supertonicModelFile(): File = File(filesDir, "models/tts/supertonic-3.onnx")
+
     fun modelDirectory(pack: ModelPack): File =
         when (pack.engineType) {
             EngineType.LlamaOcr -> File(filesDir, "models/ocr")

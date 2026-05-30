@@ -19,10 +19,10 @@ class LocalModelImporter(
         copyToModelFile(inputStream, File(modelPaths.modelDirectory(ocrPack()), "paddleocr-vl-1.5-mmproj.gguf"))
 
     fun importWhisperModel(inputStream: InputStream): File =
-        copyToModelFile(inputStream, File(modelPaths.modelDirectory(sttPack()), "whisper.bin"))
+        copyToModelFile(inputStream, modelPaths.whisperModelFile())
 
     fun importSupertonicModel(inputStream: InputStream): File =
-        copyToModelFile(inputStream, File(modelPaths.modelDirectory(ttsPack()), "supertonic-3.onnx"))
+        copyToModelFile(inputStream, modelPaths.supertonicModelFile())
 
     private fun copyToModelFile(
         inputStream: InputStream,
@@ -40,9 +40,4 @@ class LocalModelImporter(
     private fun ocrPack(): ModelPack =
         ModelRegistry.defaultPacks().first { pack -> pack.id == "ocr.paddleocr-vl-1_5.q4" }
 
-    private fun sttPack(): ModelPack =
-        ModelRegistry.defaultPacks().first { pack -> pack.id == "stt.whisper" }
-
-    private fun ttsPack(): ModelPack =
-        ModelRegistry.defaultPacks().first { pack -> pack.id == "tts.supertonic-3" }
 }

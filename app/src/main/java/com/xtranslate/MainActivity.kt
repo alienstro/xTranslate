@@ -24,8 +24,11 @@ import com.xtranslate.model.LocalModelImporter
 import com.xtranslate.model.LocalModelPaths
 import com.xtranslate.model.ModelRegistry
 import com.xtranslate.runtime.EngineCoordinator
+import com.xtranslate.runtime.FileBackedSpeechToTextEngine
+import com.xtranslate.runtime.FileBackedTextToSpeechEngine
 import com.xtranslate.runtime.FakeSpeechToTextEngine
 import com.xtranslate.runtime.FakeTextToSpeechEngine
+import com.xtranslate.runtime.LocalSpeechTestRunner
 import com.xtranslate.ui.XTranslateApp
 import com.xtranslate.ui.chat.ChatViewModel
 import com.xtranslate.ui.theme.XTranslateAppTheme
@@ -56,8 +59,16 @@ class MainActivity : ComponentActivity() {
                         runtime = AndroidLlamaRuntime(OfficialNativeLlamaBridge(this)),
                         profile = LlamaProfileFactory.translationProfile(modelPaths.translationModelFile()),
                     ),
-                sttEngine = FakeSpeechToTextEngine(),
-                ttsEngine = FakeTextToSpeechEngine(),
+                sttEngine =
+                    FileBackedSpeechToTextEngine(
+                        modelFile = modelPaths.whisperModelFile(),
+                        delegate = FakeSpeechToTextEngine(),
+                    ),
+                ttsEngine =
+                    FileBackedTextToSpeechEngine(
+                        modelFile = modelPaths.supertonicModelFile(),
+                        delegate = FakeTextToSpeechEngine(),
+                    ),
                 lowMemoryMode = true,
             )
         val chatViewModel = ChatViewModel(coordinator)
@@ -72,6 +83,7 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 var localTextTestStatus by remember { mutableStateOf<String?>(null) }
                 var localOcrTestStatus by remember { mutableStateOf<String?>(null) }
+                var speechTestStatus by remember { mutableStateOf<String?>(null) }
                 var importStatus by remember { mutableStateOf<String?>(null) }
                 var ocrImportStatus by remember { mutableStateOf<String?>(null) }
                 var speechImportStatus by remember { mutableStateOf<String?>(null) }
@@ -90,6 +102,10 @@ class MainActivity : ComponentActivity() {
                             modelPaths = modelPaths,
                             bridge = OfficialNativeLlamaBridge(this@MainActivity),
                         )
+                    }
+                val localSpeechTestRunner =
+                    remember {
+                        LocalSpeechTestRunner(modelPaths)
                     }
                 val localOcrImagePicker =
                     rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -277,6 +293,28 @@ class MainActivity : ComponentActivity() {
                     onRunLocalOcrTest = {
                         localOcrImagePicker.launch("image/*")
                     },
+                    onRunLocalSttTest = {
+                        speechTestStatus = "Running local STT test..."
+                        scope.launch {
+                            speechTestStatus =
+                                runCatching { localSpeechTestRunner.transcribeSampleAudio() }
+                                    .fold(
+                                        onSuccess = { result -> "STT result: $result" },
+                                        onFailure = { error -> "STT error: ${error.message}" },
+                                    )
+                        }
+                    },
+                    onRunLocalTtsTest = {
+                        speechTestStatus = "Running local TTS test..."
+                        scope.launch {
+                            speechTestStatus =
+                                runCatching { localSpeechTestRunner.synthesizeSampleSpeech() }
+                                    .fold(
+                                        onSuccess = { result -> "TTS result: $result" },
+                                        onFailure = { error -> "TTS error: ${error.message}" },
+                                    )
+                        }
+                    },
                     onImportTranslationModel = {
                         translationModelPicker.launch("*/*")
                     },
@@ -294,6 +332,7 @@ class MainActivity : ComponentActivity() {
                     },
                     localTextTestStatus = localTextTestStatus,
                     localOcrTestStatus = localOcrTestStatus,
+                    speechTestStatus = speechTestStatus,
                     importStatus = importStatus,
                     ocrImportStatus = ocrImportStatus,
                     speechImportStatus = speechImportStatus,

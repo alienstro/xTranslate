@@ -27,6 +27,8 @@ fun ModelsScreen(
     modelPaths: LocalModelPaths,
     onRunLocalTextTest: () -> Unit,
     onRunLocalOcrTest: () -> Unit,
+    onRunLocalSttTest: () -> Unit,
+    onRunLocalTtsTest: () -> Unit,
     onImportTranslationModel: () -> Unit,
     onImportOcrModel: () -> Unit,
     onImportOcrProjector: () -> Unit,
@@ -34,6 +36,7 @@ fun ModelsScreen(
     onImportSupertonicModel: () -> Unit,
     localTextTestStatus: String?,
     localOcrTestStatus: String?,
+    speechTestStatus: String?,
     importStatus: String?,
     ocrImportStatus: String?,
     speechImportStatus: String?,
@@ -86,6 +89,15 @@ fun ModelsScreen(
             }
         }
         ModelActionSection(title = "Speech") {
+            Button(onClick = onRunLocalSttTest) {
+                Text("Run local STT test")
+            }
+            Button(onClick = onRunLocalTtsTest) {
+                Text("Run local TTS test")
+            }
+            speechTestStatus?.let { status ->
+                Text(text = status)
+            }
             Button(onClick = onImportWhisperModel) {
                 Text("Import Whisper STT")
             }
@@ -113,6 +125,10 @@ fun ModelsScreen(
                         Text(text = uiModel.displayName, fontWeight = FontWeight.SemiBold)
                         Text(text = uiModel.engineLabel)
                         Text(text = uiModel.stateLabel)
+                        Text(text = uiModel.ramTierLabel)
+                        Text(text = uiModel.deviceFitLabel)
+                        Text(text = uiModel.sizeLabel)
+                        Text(text = uiModel.fileProgressLabel)
                         Text(text = "Required files")
                         uiModel.requiredFileLabels.forEach { fileLabel ->
                             Text(text = fileLabel)
