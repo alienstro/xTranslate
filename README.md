@@ -80,7 +80,7 @@ Run unit tests:
 
 ## Project status
 
-The foundation — chat UI, domain contracts, model registry, engine coordinator, and llama.cpp runtime binding — is implemented and building. Native OCR and translation engines are wired to llama.cpp. Whisper STT and Supertonic TTS placeholder flows are in place; full native integration for those is in progress.
+The foundation — chat UI, domain contracts, model registry, engine coordinator, and llama.cpp runtime binding — is implemented and building. Native OCR and translation engines are wired to llama.cpp. Speech input now records locally and transcribes through whisper.cpp with `ggml-large-v3-turbo-q8_0.bin`. Supertonic TTS is still a placeholder flow.
 
 ## License
 

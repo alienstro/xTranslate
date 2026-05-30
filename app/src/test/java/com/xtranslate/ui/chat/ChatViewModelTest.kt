@@ -193,6 +193,18 @@ class ChatViewModelTest {
         }
 
     @Test
+    fun transcribeAudioPutsTranscriptInComposer() =
+        runTest {
+            val viewModel = ChatViewModel(fakeCoordinator())
+
+            viewModel.transcribeAudio(AudioInput(uri = "recordings/latest.wav", durationMillis = 1000L))
+            advanceUntilIdle()
+
+            assertEquals("Voice transcript", viewModel.state.value.composerText)
+            assertEquals(false, viewModel.state.value.isBusy)
+        }
+
+    @Test
     fun transcribeVoicePlaceholderFailureAddsSystemMessage() =
         runTest {
             val viewModel =
@@ -209,6 +221,68 @@ class ChatViewModelTest {
             assertEquals(AppTab.Models, viewModel.state.value.selectedTab)
             assertTrue(
                 viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Missing Whisper model file")
+                },
+            )
+        }
+
+    @Test
+    fun transcribeAudioFailureAddsSystemMessageAndKeepsCurrentTabForNonModelErrors() =
+        runTest {
+            val viewModel =
+                ChatViewModel(
+                    fakeCoordinator(
+                        sttEngine = FailingSpeechToTextEngine("Missing audio file: cache/voice.wav"),
+                    ),
+                )
+
+            viewModel.transcribeAudio(AudioInput(uri = "cache/voice.wav", durationMillis = 0L))
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            assertEquals(AppTab.Chat, viewModel.state.value.selectedTab)
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Missing audio file: cache/voice.wav")
+                },
+            )
+        }
+
+    @Test
+    fun transcribeAudioRetryClearsStaleMissingWhisperMessage() =
+        runTest {
+            val viewModel =
+                ChatViewModel(
+                    fakeCoordinator(
+                        sttEngine =
+                            QueueSpeechToTextEngine(
+                                listOf(
+                                    Result.failure(IllegalStateException("Missing Whisper model file: models/stt/model.bin")),
+                                    Result.success(Transcript("Hello from Whisper")),
+                                ),
+                            ),
+                    ),
+                )
+
+            viewModel.transcribeAudio(AudioInput(uri = "cache/first.wav", durationMillis = 1000L))
+            advanceUntilIdle()
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Missing Whisper model file")
+                },
+            )
+
+            viewModel.selectTab(AppTab.Chat)
+            viewModel.transcribeAudio(AudioInput(uri = "cache/second.wav", durationMillis = 1000L))
+            advanceUntilIdle()
+
+            assertEquals("Hello from Whisper", viewModel.state.value.composerText)
+            assertEquals(AppTab.Chat, viewModel.state.value.selectedTab)
+            assertTrue(
+                viewModel.state.value.messages.none {
                     it.kind == ChatMessageKind.System &&
                         it.text.contains("Missing Whisper model file")
                 },
@@ -313,6 +387,15 @@ private class FailingSpeechToTextEngine(
     override suspend fun transcribe(audio: AudioInput): Transcript {
         error(message)
     }
+}
+
+private class QueueSpeechToTextEngine(
+    private val results: List<Result<Transcript>>,
+) : SpeechToTextEngine {
+    private var index = 0
+
+    override suspend fun transcribe(audio: AudioInput): Transcript =
+        results[index++].getOrThrow()
 }
 
 private class FailingTextToSpeechEngine(

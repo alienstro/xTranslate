@@ -10,7 +10,7 @@ class LocalModelPaths(
 ) {
     fun translationModelFile(): File = File(filesDir, "models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf")
 
-    fun whisperModelFile(): File = File(filesDir, "models/stt/whisper.bin")
+    fun whisperModelFile(): File = File(filesDir, "models/stt/ggml-large-v3-turbo-q8_0.bin")
 
     fun supertonicModelFile(): File = File(filesDir, "models/tts/supertonic-3.onnx")
 

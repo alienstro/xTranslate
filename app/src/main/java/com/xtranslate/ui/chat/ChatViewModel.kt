@@ -104,15 +104,24 @@ class ChatViewModel(
     }
 
     fun transcribeVoicePlaceholder() {
-        mutableState.update { it.copy(isBusy = true) }
+        transcribeAudio(
+            AudioInput(
+                uri = "memory://voice-placeholder",
+                durationMillis = 0L,
+            ),
+        )
+    }
+
+    fun transcribeAudio(audio: AudioInput) {
+        mutableState.update {
+            it.copy(
+                isBusy = true,
+                messages = it.messages.filterNot(::isMissingWhisperModelMessage),
+            )
+        }
         viewModelScope.launch {
             runCatching {
-                engineCoordinator.transcribe(
-                    AudioInput(
-                        uri = "memory://voice-placeholder",
-                        durationMillis = 0L,
-                    ),
-                )
+                engineCoordinator.transcribe(audio)
             }.fold(
                 onSuccess = { transcript ->
                     mutableState.update {
@@ -124,6 +133,12 @@ class ChatViewModel(
                 },
                 onFailure = { error -> showError(error) },
             )
+        }
+    }
+
+    fun clearMissingWhisperModelMessages() {
+        mutableState.update {
+            it.copy(messages = it.messages.filterNot(::isMissingWhisperModelMessage))
         }
     }
 
@@ -180,4 +195,8 @@ class ChatViewModel(
             )
         }
     }
+
+    private fun isMissingWhisperModelMessage(message: ChatMessage): Boolean =
+        message.kind == ChatMessageKind.System &&
+            message.text.contains("Missing Whisper model file")
 }

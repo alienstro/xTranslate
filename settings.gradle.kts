@@ -19,3 +19,6 @@ pluginManagement {
 
   include(":llamaAndroidLib")
   project(":llamaAndroidLib").projectDir = file("third_party/llama.cpp/examples/llama.android/lib")
+
+  include(":whisperAndroidLib")
+  project(":whisperAndroidLib").projectDir = file("third_party/whisper.cpp/examples/whisper.android/lib")

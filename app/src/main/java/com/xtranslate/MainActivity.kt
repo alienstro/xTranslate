@@ -1,10 +1,8 @@
 package com.xtranslate
 
-import android.app.Activity
-import android.content.ActivityNotFoundException
-import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -17,6 +15,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import com.xtranslate.domain.AudioInput
 import com.xtranslate.domain.ImageInput
 import com.xtranslate.llama.AndroidLlamaRuntime
 import com.xtranslate.llama.LocalOcrRunner
@@ -26,6 +26,7 @@ import com.xtranslate.llama.LlamaProfileFactory
 import com.xtranslate.llama.LlamaTranslationEngine
 import com.xtranslate.llama.nativebridge.OfficialNativeLlamaBridge
 import com.xtranslate.model.FileBackedModelStore
+import com.xtranslate.model.EngineType
 import com.xtranslate.model.LocalModelImporter
 import com.xtranslate.model.LocalModelPaths
 import com.xtranslate.model.ModelDownloader
@@ -34,15 +35,17 @@ import com.xtranslate.model.ModelRegistry
 import com.xtranslate.runtime.EngineCoordinator
 import com.xtranslate.runtime.FileBackedSpeechToTextEngine
 import com.xtranslate.runtime.FileBackedTextToSpeechEngine
-import com.xtranslate.runtime.FakeSpeechToTextEngine
 import com.xtranslate.runtime.FakeTextToSpeechEngine
+import com.xtranslate.runtime.LocalAudioRecorder
 import com.xtranslate.runtime.LocalSpeechTestRunner
+import com.xtranslate.runtime.WhisperCppSpeechToTextEngine
 import com.xtranslate.ui.XTranslateApp
 import com.xtranslate.ui.chat.ChatViewModel
 import com.xtranslate.ui.theme.XTranslateAppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.Locale
 
 /**
@@ -78,7 +81,7 @@ class MainActivity : ComponentActivity() {
                 sttEngine =
                     FileBackedSpeechToTextEngine(
                         modelFile = modelPaths.whisperModelFile(),
-                        delegate = FakeSpeechToTextEngine(),
+                        delegate = WhisperCppSpeechToTextEngine(modelPaths.whisperModelFile()),
                     ),
                 ttsEngine =
                     FileBackedTextToSpeechEngine(
@@ -106,8 +109,11 @@ class MainActivity : ComponentActivity() {
                 var modelDownloadStatus by remember { mutableStateOf<String?>(null) }
                 var modelDownloadProgress by remember { mutableStateOf<ModelDownloadProgress?>(null) }
                 var modelStateRefreshKey by remember { mutableStateOf(0) }
+                var isRecordingVoice by remember { mutableStateOf(false) }
+                var voiceRecordingStartedAt by remember { mutableStateOf(0L) }
                 val localModelImporter = remember { LocalModelImporter(modelPaths) }
                 val modelDownloader = remember { ModelDownloader(modelPaths) }
+                val audioRecorder = remember { LocalAudioRecorder() }
                 val localTextGenerationRunner =
                     remember {
                         LocalTextGenerationRunner(
@@ -126,20 +132,50 @@ class MainActivity : ComponentActivity() {
                     remember {
                         LocalSpeechTestRunner(modelPaths)
                     }
-                val speechRecognizerLauncher =
-                    rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                        if (result.resultCode != Activity.RESULT_OK) {
-                            return@rememberLauncherForActivityResult
+                fun startVoiceRecording() {
+                    val outputFile = File(cacheDir, "voice-input/latest.wav")
+                    voiceRecordingStartedAt = System.currentTimeMillis()
+                    isRecordingVoice = true
+                    Toast.makeText(this@MainActivity, "Recording voice input...", Toast.LENGTH_SHORT).show()
+                    scope.launch {
+                        audioRecorder.startRecording(outputFile) { error ->
+                            runOnUiThread {
+                                isRecordingVoice = false
+                                chatViewModel.updateComposer("Voice recording failed: ${error.message}")
+                            }
+                        }
+                    }
+                }
+
+                fun stopVoiceRecording() {
+                    scope.launch {
+                        val audioFile = audioRecorder.stopRecording()
+                        isRecordingVoice = false
+                        if (audioFile == null) {
+                            chatViewModel.updateComposer("No voice recording was active.")
+                            return@launch
                         }
 
-                        val transcript =
-                            result.data
-                                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-                                ?.firstOrNull()
-                                ?.trim()
+                        val durationMillis = System.currentTimeMillis() - voiceRecordingStartedAt
+                        chatViewModel.transcribeAudio(
+                            AudioInput(
+                                uri = audioFile.absolutePath,
+                                durationMillis = durationMillis,
+                            ),
+                        )
+                    }
+                }
 
-                        if (!transcript.isNullOrBlank()) {
-                            chatViewModel.updateComposer(transcript)
+                val recordAudioPermissionLauncher =
+                    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+                        if (granted) {
+                            startVoiceRecording()
+                        } else {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Microphone permission is required for local Whisper.",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                         }
                     }
                 val localOcrImagePicker =
@@ -272,6 +308,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }.fold(
                                     onSuccess = { file ->
+                                        chatViewModel.clearMissingWhisperModelMessages()
                                         modelStateRefreshKey += 1
                                         "Imported Whisper STT: ${file.name}"
                                     },
@@ -315,23 +352,19 @@ class MainActivity : ComponentActivity() {
                         chatImagePicker.launch("image/*")
                     },
                     onMic = {
-                        val intent =
-                            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                                putExtra(
-                                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
+                        if (isRecordingVoice) {
+                            stopVoiceRecording()
+                        } else {
+                            val permissionState =
+                                ContextCompat.checkSelfPermission(
+                                    this@MainActivity,
+                                    Manifest.permission.RECORD_AUDIO,
                                 )
-                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to translate")
+                            if (permissionState == PackageManager.PERMISSION_GRANTED) {
+                                startVoiceRecording()
+                            } else {
+                                recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                             }
-                        try {
-                            speechRecognizerLauncher.launch(intent)
-                        } catch (_: ActivityNotFoundException) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Speech recognition is not available on this device.",
-                                Toast.LENGTH_SHORT,
-                            ).show()
                         }
                     },
                     onSpeakTranslation = { message ->
@@ -417,6 +450,9 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }.fold(
                                     onSuccess = { files ->
+                                        if (pack.engineType == EngineType.WhisperStt) {
+                                            chatViewModel.clearMissingWhisperModelMessages()
+                                        }
                                         modelStore.markInstalled(pack.id)
                                         modelStateRefreshKey += 1
                                         modelDownloadProgress = null

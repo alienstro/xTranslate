@@ -29,6 +29,20 @@ class ModelRegistryTest {
     }
 
     @Test
+    fun speechPackUsesWhisperLargeV3TurboQ8() {
+        val pack = ModelRegistry.defaultPacks().first { it.id == "stt.whisper" }
+
+        assertEquals("Whisper Large v3 Turbo Q8", pack.displayName)
+        assertEquals(900, pack.expectedSizeMb)
+        assertEquals(RamTier.High, pack.minimumRamTier)
+        assertEquals("ggml-large-v3-turbo-q8_0.bin", pack.files.single().name)
+        assertEquals(
+            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin",
+            pack.files.single().downloadUrl,
+        )
+    }
+
+    @Test
     fun inMemoryStoreTracksInstallState() {
         val store = InMemoryModelStore(ModelRegistry.defaultPacks())
 

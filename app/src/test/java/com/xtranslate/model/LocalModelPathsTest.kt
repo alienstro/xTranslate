@@ -47,7 +47,7 @@ class LocalModelPathsTest {
         val paths = LocalModelPaths(filesDir)
 
         assertEquals(
-            "/data/user/0/com.xtranslate/files/models/stt/whisper.bin",
+            "/data/user/0/com.xtranslate/files/models/stt/ggml-large-v3-turbo-q8_0.bin",
             paths.whisperModelFile().path.replace('\\', '/'),
         )
         assertEquals(

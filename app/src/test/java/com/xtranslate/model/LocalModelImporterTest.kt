@@ -69,8 +69,8 @@ class LocalModelImporterTest {
                 ByteArrayInputStream("fake whisper bytes".toByteArray()),
             )
 
-        assertEquals("whisper.bin", targetFile.name)
-        assertTrue(targetFile.path.replace('\\', '/').endsWith("/models/stt/whisper.bin"))
+        assertEquals("ggml-large-v3-turbo-q8_0.bin", targetFile.name)
+        assertTrue(targetFile.path.replace('\\', '/').endsWith("/models/stt/ggml-large-v3-turbo-q8_0.bin"))
         assertEquals("fake whisper bytes", targetFile.readText())
     }
 

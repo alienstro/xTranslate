@@ -22,6 +22,8 @@ This is the active plan for the current local-runtime milestone. Small task-leve
 - Local STT/TTS smoke test buttons.
 - Models screen hardware hints, low-end friendly labels, file progress, and readable file sizes.
 - In-app model download buttons for configured model packs.
+- Whisper Large v3 Turbo Q8 model selection through whisper.cpp.
+- Local microphone recording for chat voice input.
 
 ## Active Rules
 
@@ -39,7 +41,6 @@ This is the active plan for the current local-runtime milestone. Small task-leve
 4. Confirm missing model errors route to the Models tab.
 5. Test one tiny placeholder Whisper file and one tiny placeholder Supertonic file to confirm the smoke tests unlock.
 6. Pick the next native runtime integration target:
-   - Whisper STT runtime, or
    - Supertonic ONNX TTS runtime, or
    - real OCR/VLM image handling in llama.cpp.
 

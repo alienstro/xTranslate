@@ -8,7 +8,7 @@ xTranslate is an offline-first Android translation app. It should support text t
 
 - Text translation uses llama.cpp through the app's llama runtime adapter.
 - Image translation uses llama.cpp OCR/VLM flow with a model file and projector file.
-- STT and TTS are still placeholder engines, but they now check imported local model files before running.
+- STT records local WAV audio and runs Whisper through whisper.cpp. TTS is still a placeholder engine, but it checks imported local model files before running.
 - The runtime coordinator lazy-loads engines and clears loaded state aggressively in low-memory mode.
 - Model files are imported or downloaded into app-private storage under `files/models/...`.
 
@@ -17,7 +17,7 @@ xTranslate is an offline-first Android translation app. It should support text t
 - Translation: `models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf`
 - OCR model: `models/ocr/paddleocr-vl-1.5-q4.gguf`
 - OCR projector: `models/ocr/paddleocr-vl-1.5-mmproj.gguf`
-- Whisper STT: `models/stt/whisper.bin`
+- Whisper STT: `models/stt/ggml-large-v3-turbo-q8_0.bin`
 - Supertonic TTS: `models/tts/supertonic-3.onnx`
 
 ## User Flows
@@ -26,7 +26,7 @@ xTranslate is an offline-first Android translation app. It should support text t
 
 - User can type text and translate it to a selected target language.
 - User can pick an image and run image translation.
-- User can press MIC to run the current STT placeholder flow.
+- User can press MIC once to start local recording and press it again to stop and transcribe with Whisper.
 - User can press Speak on a translation message to run the current TTS placeholder flow.
 - Missing model errors are shown as system messages and route the user to the Models tab.
 
@@ -54,9 +54,7 @@ xTranslate is an offline-first Android translation app. It should support text t
 
 ## Deferred Work
 
-- Real Whisper inference.
 - Real Supertonic ONNX inference.
-- Real microphone recording.
 - Real audio playback.
 - Device RAM detection and automatic Q4/Q8 model selection.
 - Checksum validation.

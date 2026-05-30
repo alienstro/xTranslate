@@ -76,17 +76,18 @@ object ModelRegistry {
             ),
             ModelPack(
                 id = "stt.whisper",
-                displayName = "Whisper STT",
+                displayName = "Whisper Large v3 Turbo Q8",
                 engineType = EngineType.WhisperStt,
                 files =
                     listOf(
                         ModelFile(
-                            name = "whisper.bin",
-                            downloadUrl = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin",
+                            name = "ggml-large-v3-turbo-q8_0.bin",
+                            downloadUrl =
+                                "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin",
                         ),
                     ),
-                expectedSizeMb = null,
-                minimumRamTier = RamTier.Low,
+                expectedSizeMb = 900,
+                minimumRamTier = RamTier.High,
             ),
             ModelPack(
                 id = "tts.supertonic-3",

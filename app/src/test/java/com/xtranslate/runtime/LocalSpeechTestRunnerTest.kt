@@ -37,7 +37,7 @@ class LocalSpeechTestRunnerTest {
                 fail("Expected missing Whisper model error")
             } catch (error: IllegalStateException) {
                 assertEquals(
-                    "Missing Whisper model file: ${File(root, "models/stt/whisper.bin").path.replace('\\', '/')}",
+                    "Missing Whisper model file: ${File(root, "models/stt/ggml-large-v3-turbo-q8_0.bin").path.replace('\\', '/')}",
                     error.message,
                 )
             }
