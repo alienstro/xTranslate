@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ChatScreen(
     state: ChatUiState,
+    isRecordingVoice: Boolean,
     onComposerChange: (String) -> Unit,
     onTargetLanguageChange: (String) -> Unit,
     onSend: () -> Unit,
@@ -110,6 +111,7 @@ fun ChatScreen(
             text = state.composerText,
             targetLanguage = state.targetLanguage,
             isBusy = state.isBusy,
+            isRecordingVoice = isRecordingVoice,
             onTextChange = onComposerChange,
             onTargetLanguageChange = onTargetLanguageChange,
             onSend = onSend,
@@ -289,6 +291,7 @@ private fun ChatComposer(
     text: String,
     targetLanguage: String,
     isBusy: Boolean,
+    isRecordingVoice: Boolean,
     onTextChange: (String) -> Unit,
     onTargetLanguageChange: (String) -> Unit,
     onSend: () -> Unit,

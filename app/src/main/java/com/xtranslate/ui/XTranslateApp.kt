@@ -36,6 +36,7 @@ fun XTranslateApp(
     modelStore: ModelStore,
     modelPaths: LocalModelPaths,
     onPickImage: () -> Unit,
+    isRecordingVoice: Boolean = false,
     onMic: () -> Unit,
     onSpeakTranslation: (ChatMessage) -> Unit,
     onRunLocalTextTest: () -> Unit,
@@ -104,6 +105,7 @@ fun XTranslateApp(
                 AppTab.Chat ->
                     ChatScreen(
                         state = state,
+                        isRecordingVoice = isRecordingVoice,
                         onComposerChange = chatViewModel::updateComposer,
                         onTargetLanguageChange = chatViewModel::updateTargetLanguage,
                         onSend = chatViewModel::sendText,
