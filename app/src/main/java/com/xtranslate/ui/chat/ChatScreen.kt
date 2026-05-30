@@ -20,8 +20,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Mic
@@ -39,17 +45,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 @Composable
 fun ChatScreen(
@@ -298,6 +307,18 @@ private fun ChatComposer(
     onImage: () -> Unit,
     onMic: () -> Unit,
 ) {
+    var elapsedSeconds by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(isRecordingVoice) {
+        if (isRecordingVoice) {
+            elapsedSeconds = 0
+            while (true) {
+                delay(1_000)
+                elapsedSeconds++
+            }
+        }
+    }
+
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp,
@@ -327,6 +348,7 @@ private fun ChatComposer(
                 value = text,
                 onValueChange = onTextChange,
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !isRecordingVoice,
                 textStyle = TextStyle(
                     fontSize = 15.sp,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -345,9 +367,13 @@ private fun ChatComposer(
                     ) {
                         if (text.isEmpty()) {
                             Text(
-                                text = "Type a message...",
+                                text = if (isRecordingVoice) "Speak now…" else "Type a message...",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                color = if (isRecordingVoice) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                },
                             )
                         }
                         innerTextField()
@@ -359,44 +385,123 @@ private fun ChatComposer(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onImage) {
+                IconButton(
+                    onClick = onImage,
+                    modifier = Modifier.alpha(if (isRecordingVoice) 0.4f else 1f),
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.Image,
                         contentDescription = "Add image",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                IconButton(onClick = onMic) {
-                    Icon(
-                        imageVector = Icons.Outlined.Mic,
-                        contentDescription = "Voice input",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+
+                if (isRecordingVoice) {
+                    RecordingPill(
+                        elapsedSeconds = elapsedSeconds,
+                        onStop = onMic,
+                        modifier = Modifier.weight(1f),
                     )
-                }
-                Spacer(Modifier.weight(1f))
-                Button(
-                    onClick = onSend,
-                    enabled = !isBusy && text.isNotBlank(),
-                    shape = RoundedCornerShape(24.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
-                ) {
-                    if (isBusy) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    } else {
+                } else {
+                    IconButton(onClick = onMic) {
                         Icon(
-                            imageVector = Icons.Default.Send,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
+                            imageVector = Icons.Outlined.Mic,
+                            contentDescription = "Voice input",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Spacer(Modifier.width(6.dp))
-                        Text("Translate")
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Button(
+                        onClick = onSend,
+                        enabled = !isBusy && text.isNotBlank(),
+                        shape = RoundedCornerShape(24.dp),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                    ) {
+                        if (isBusy) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Send,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text("Translate")
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RecordingPill(
+    elapsedSeconds: Int,
+    onStop: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "rec")
+    val dotAlpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "dot",
+    )
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+            modifier = Modifier.weight(1f),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error.copy(alpha = dotAlpha)),
+                )
+                Text(
+                    text = "Listening…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "%d:%02d".format(elapsedSeconds / 60, elapsedSeconds % 60),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        IconButton(
+            onClick = onStop,
+            modifier = Modifier
+                .size(36.dp)
+                .background(MaterialTheme.colorScheme.error, CircleShape),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Stop,
+                contentDescription = "Stop recording",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onError,
+            )
         }
     }
 }
