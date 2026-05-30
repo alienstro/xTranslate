@@ -36,7 +36,7 @@ fun XTranslateApp(
     modelStore: ModelStore,
     modelPaths: LocalModelPaths,
     onPickImage: () -> Unit,
-    isRecordingVoice: Boolean = false,
+    isRecordingVoice: Boolean,
     onMic: () -> Unit,
     onSpeakTranslation: (ChatMessage) -> Unit,
     onRunLocalTextTest: () -> Unit,

@@ -141,7 +141,7 @@ class MainActivity : ComponentActivity() {
                         audioRecorder.startRecording(outputFile) { error ->
                             runOnUiThread {
                                 isRecordingVoice = false
-                                chatViewModel.updateComposer("Voice recording failed: ${error.message}")
+                                chatViewModel.showVoiceError("Voice recording failed: ${error.message}")
                             }
                         }
                     }
@@ -151,10 +151,7 @@ class MainActivity : ComponentActivity() {
                     scope.launch {
                         val audioFile = audioRecorder.stopRecording()
                         isRecordingVoice = false
-                        if (audioFile == null) {
-                            chatViewModel.updateComposer("No voice recording was active.")
-                            return@launch
-                        }
+                        if (audioFile == null) return@launch
 
                         val durationMillis = System.currentTimeMillis() - voiceRecordingStartedAt
                         chatViewModel.transcribeAudio(
@@ -351,6 +348,7 @@ class MainActivity : ComponentActivity() {
                     onPickImage = {
                         chatImagePicker.launch("image/*")
                     },
+                    isRecordingVoice = isRecordingVoice,
                     onMic = {
                         if (isRecordingVoice) {
                             stopVoiceRecording()
