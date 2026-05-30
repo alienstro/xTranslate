@@ -1,8 +1,9 @@
 package com.xtranslate
 
-import android.Manifest
-import android.content.pm.PackageManager
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -15,8 +16,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
-import com.xtranslate.domain.AudioInput
 import com.xtranslate.domain.ImageInput
 import com.xtranslate.llama.AndroidLlamaRuntime
 import com.xtranslate.llama.LocalOcrRunner
@@ -36,7 +35,6 @@ import com.xtranslate.runtime.EngineCoordinator
 import com.xtranslate.runtime.FileBackedSpeechToTextEngine
 import com.xtranslate.runtime.FileBackedTextToSpeechEngine
 import com.xtranslate.runtime.FakeTextToSpeechEngine
-import com.xtranslate.runtime.LocalAudioRecorder
 import com.xtranslate.runtime.LocalSpeechTestRunner
 import com.xtranslate.runtime.WhisperCppSpeechToTextEngine
 import com.xtranslate.ui.XTranslateApp
@@ -45,7 +43,6 @@ import com.xtranslate.ui.theme.XTranslateAppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.util.Locale
 
 /**
@@ -109,11 +106,8 @@ class MainActivity : ComponentActivity() {
                 var modelDownloadStatus by remember { mutableStateOf<String?>(null) }
                 var modelDownloadProgress by remember { mutableStateOf<ModelDownloadProgress?>(null) }
                 var modelStateRefreshKey by remember { mutableStateOf(0) }
-                var isRecordingVoice by remember { mutableStateOf(false) }
-                var voiceRecordingStartedAt by remember { mutableStateOf(0L) }
                 val localModelImporter = remember { LocalModelImporter(modelPaths) }
                 val modelDownloader = remember { ModelDownloader(modelPaths) }
-                val audioRecorder = remember { LocalAudioRecorder() }
                 val localTextGenerationRunner =
                     remember {
                         LocalTextGenerationRunner(
@@ -132,46 +126,18 @@ class MainActivity : ComponentActivity() {
                     remember {
                         LocalSpeechTestRunner(modelPaths)
                     }
-                fun startVoiceRecording() {
-                    val outputFile = File(cacheDir, "voice-input/latest.wav")
-                    voiceRecordingStartedAt = System.currentTimeMillis()
-                    isRecordingVoice = true
-                    scope.launch {
-                        audioRecorder.startRecording(outputFile) { error ->
-                            runOnUiThread {
-                                isRecordingVoice = false
-                                chatViewModel.showVoiceError("Voice recording failed: ${error.message}")
+                val speechRecognizerLauncher =
+                    rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                        if (result.resultCode == Activity.RESULT_OK) {
+                            val transcript =
+                                result.data
+                                    ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                                    ?.firstOrNull()
+                                    .orEmpty()
+                                    .trim()
+                            if (transcript.isNotBlank()) {
+                                chatViewModel.translateVoiceTranscript(transcript)
                             }
-                        }
-                    }
-                }
-
-                fun stopVoiceRecording() {
-                    scope.launch {
-                        val audioFile = audioRecorder.stopRecording()
-                        isRecordingVoice = false
-                        if (audioFile == null) return@launch
-
-                        val durationMillis = System.currentTimeMillis() - voiceRecordingStartedAt
-                        chatViewModel.transcribeAudio(
-                            AudioInput(
-                                uri = audioFile.absolutePath,
-                                durationMillis = durationMillis,
-                            ),
-                        )
-                    }
-                }
-
-                val recordAudioPermissionLauncher =
-                    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                        if (granted) {
-                            startVoiceRecording()
-                        } else {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Microphone permission is required for local Whisper.",
-                                Toast.LENGTH_SHORT,
-                            ).show()
                         }
                     }
                 val localOcrImagePicker =
@@ -347,21 +313,24 @@ class MainActivity : ComponentActivity() {
                     onPickImage = {
                         chatImagePicker.launch("image/*")
                     },
-                    isRecordingVoice = isRecordingVoice,
+                    isRecordingVoice = false,
                     onMic = {
-                        if (isRecordingVoice) {
-                            stopVoiceRecording()
-                        } else {
-                            val permissionState =
-                                ContextCompat.checkSelfPermission(
-                                    this@MainActivity,
-                                    Manifest.permission.RECORD_AUDIO,
+                        val intent =
+                            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(
+                                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
                                 )
-                            if (permissionState == PackageManager.PERMISSION_GRANTED) {
-                                startVoiceRecording()
-                            } else {
-                                recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to translate")
                             }
+                        try {
+                            speechRecognizerLauncher.launch(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Speech recognition is not available on this device",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                         }
                     },
                     onSpeakTranslation = { message ->

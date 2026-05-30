@@ -205,6 +205,13 @@ class ChatViewModel(
         }
     }
 
+    fun translateVoiceTranscript(transcript: String) {
+        val text = transcript.trim()
+        if (text.isEmpty()) return
+        mutableState.update { it.copy(composerText = text) }
+        sendText()
+    }
+
     fun showVoiceError(message: String) {
         mutableState.update {
             it.copy(

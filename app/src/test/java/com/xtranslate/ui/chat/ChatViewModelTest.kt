@@ -357,6 +357,33 @@ class ChatViewModelTest {
         }
 
     @Test
+    fun translateVoiceTranscriptAddsSourceAndTranslationMessages() =
+        runTest {
+            val viewModel = ChatViewModel(fakeCoordinator())
+
+            viewModel.translateVoiceTranscript("Hello world")
+            advanceUntilIdle()
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            val messages = viewModel.state.value.messages
+            assertEquals(2, messages.size)
+            assertEquals(ChatMessageKind.Source, messages[0].kind)
+            assertEquals("Hello world", messages[0].text)
+            assertEquals(ChatMessageKind.Translation, messages[1].kind)
+        }
+
+    @Test
+    fun translateVoiceTranscriptIgnoresBlankInput() =
+        runTest {
+            val viewModel = ChatViewModel(fakeCoordinator())
+
+            viewModel.translateVoiceTranscript("   ")
+
+            assertEquals(false, viewModel.state.value.isBusy)
+            assertTrue(viewModel.state.value.messages.isEmpty())
+        }
+
+    @Test
     fun showVoiceErrorAddsSystemMessage() =
         runTest {
             val viewModel = ChatViewModel(fakeCoordinator())
