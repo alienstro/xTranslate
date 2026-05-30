@@ -19,9 +19,13 @@ object Prompts {
     fun translationPrompt(request: TranslationRequest): String {
         val source = request.sourceLanguage ?: "auto-detected source language"
         return """
-            Translate from $source to ${request.targetLanguage}.
-            Return only the translation.
-            Preserve names, numbers, punctuation, and line breaks where useful.
+            You are a translation engine.
+            Task: translate the source text from $source into ${request.targetLanguage}.
+            Output rules:
+            - Return only the translated text.
+            - Do not copy the source text unless it is a name, number, or untranslatable term.
+            - Do not explain, summarize, add notes, or add labels.
+            - Preserve names, numbers, punctuation, and useful line breaks.
 
             Source text:
             ${request.sourceText}

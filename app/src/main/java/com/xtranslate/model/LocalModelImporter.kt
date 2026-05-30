@@ -37,6 +37,12 @@ class LocalModelImporter(
         return targetFile
     }
 
+    fun deleteModelFiles(pack: ModelPack) {
+        pack.files.forEach { file ->
+            modelPaths.modelFile(pack, file).delete()
+        }
+    }
+
     private fun ocrPack(): ModelPack =
         ModelRegistry.defaultPacks().first { pack -> pack.id == "ocr.paddleocr-vl-1_5.q4" }
 

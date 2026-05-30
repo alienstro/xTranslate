@@ -158,6 +158,29 @@ class ChatViewModelTest {
         }
 
     @Test
+    fun failureWithoutMessageShowsErrorType() =
+        runTest {
+            val viewModel =
+                ChatViewModel(
+                    fakeCoordinator(
+                        translationEngine = NullMessageTranslationEngine(),
+                    ),
+                )
+
+            viewModel.updateComposer("Hello")
+            viewModel.sendText()
+            advanceUntilIdle()
+
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.System &&
+                        it.text.contains("Local AI error") &&
+                        it.text.contains("RuntimeException")
+                },
+            )
+        }
+
+    @Test
     fun transcribeVoicePlaceholderPutsTranscriptInComposer() =
         runTest {
             val viewModel = ChatViewModel(fakeCoordinator())
@@ -267,6 +290,12 @@ private class FailingTranslationEngine(
 ) : TranslationEngine {
     override suspend fun translate(request: TranslationRequest): TranslationResult {
         error(message)
+    }
+}
+
+private class NullMessageTranslationEngine : TranslationEngine {
+    override suspend fun translate(request: TranslationRequest): TranslationResult {
+        throw RuntimeException()
     }
 }
 

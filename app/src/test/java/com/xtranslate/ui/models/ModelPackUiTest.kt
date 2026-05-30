@@ -33,16 +33,16 @@ class ModelPackUiTest {
                 modelPaths = paths,
             )
 
-        assertEquals("Broad Multilingual Translator", uiModel.displayName)
+        assertEquals("Qwen2.5 0.5B Translator", uiModel.displayName)
         assertEquals("Engine: LlamaTranslation", uiModel.engineLabel)
         assertEquals("State: Missing", uiModel.stateLabel)
         assertEquals("Minimum RAM: Low", uiModel.ramTierLabel)
-        assertEquals("Size: Unknown", uiModel.sizeLabel)
+        assertEquals("Size: 398 MB", uiModel.sizeLabel)
         assertEquals("Device fit: Low-end friendly", uiModel.deviceFitLabel)
         assertEquals("Files: 0/1 installed", uiModel.fileProgressLabel)
         assertTrue(
             uiModel.requiredFileLabels.single().endsWith(
-                "/models/translation/multilingual-translator.gguf - Missing",
+                "/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf - Missing",
             ),
         )
     }
@@ -64,7 +64,7 @@ class ModelPackUiTest {
 
         assertTrue(
             uiModel.requiredFileLabels.single().endsWith(
-                "/models/translation/multilingual-translator.gguf - Installed - 5 B",
+                "/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf - Installed - 5 B",
             ),
         )
     }
@@ -86,7 +86,7 @@ class ModelPackUiTest {
 
         assertTrue(
             uiModel.requiredFileLabels.single().endsWith(
-                "/models/translation/multilingual-translator.gguf - Installed - 1.5 KB",
+                "/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf - Installed - 1.5 KB",
             ),
         )
     }
@@ -111,7 +111,7 @@ class ModelPackUiTest {
 
             assertTrue(
                 uiModel.requiredFileLabels.single().endsWith(
-                    "/models/translation/multilingual-translator.gguf - Installed - 1.5 KB",
+                    "/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf - Installed - 1.5 KB",
                 ),
             )
         } finally {
@@ -136,7 +136,7 @@ class ModelPackUiTest {
 
         assertTrue(
             uiModel.requiredFileLabels.single().endsWith(
-                "/models/translation/multilingual-translator.gguf - Installed - 2.0 MB",
+                "/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf - Installed - 2.0 MB",
             ),
         )
     }

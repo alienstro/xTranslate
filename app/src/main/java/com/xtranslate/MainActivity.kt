@@ -1,6 +1,12 @@
 package com.xtranslate
 
+import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.os.Bundle
+import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -22,6 +28,8 @@ import com.xtranslate.llama.nativebridge.OfficialNativeLlamaBridge
 import com.xtranslate.model.FileBackedModelStore
 import com.xtranslate.model.LocalModelImporter
 import com.xtranslate.model.LocalModelPaths
+import com.xtranslate.model.ModelDownloader
+import com.xtranslate.model.ModelDownloadProgress
 import com.xtranslate.model.ModelRegistry
 import com.xtranslate.runtime.EngineCoordinator
 import com.xtranslate.runtime.FileBackedSpeechToTextEngine
@@ -35,14 +43,22 @@ import com.xtranslate.ui.theme.XTranslateAppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 /**
  * Android entry point that wires the first app shell to fake local engines.
  */
 class MainActivity : ComponentActivity() {
+    private var textToSpeech: TextToSpeech? = null
+    private var isTextToSpeechReady: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        textToSpeech =
+            TextToSpeech(this) { status ->
+                isTextToSpeechReady = status == TextToSpeech.SUCCESS
+            }
 
         val modelPaths = LocalModelPaths(filesDir)
         val ocrPack = ModelRegistry.defaultPacks().first { pack -> pack.id == "ocr.paddleocr-vl-1_5.q4" }
@@ -87,8 +103,11 @@ class MainActivity : ComponentActivity() {
                 var importStatus by remember { mutableStateOf<String?>(null) }
                 var ocrImportStatus by remember { mutableStateOf<String?>(null) }
                 var speechImportStatus by remember { mutableStateOf<String?>(null) }
+                var modelDownloadStatus by remember { mutableStateOf<String?>(null) }
+                var modelDownloadProgress by remember { mutableStateOf<ModelDownloadProgress?>(null) }
                 var modelStateRefreshKey by remember { mutableStateOf(0) }
                 val localModelImporter = remember { LocalModelImporter(modelPaths) }
+                val modelDownloader = remember { ModelDownloader(modelPaths) }
                 val localTextGenerationRunner =
                     remember {
                         LocalTextGenerationRunner(
@@ -106,6 +125,22 @@ class MainActivity : ComponentActivity() {
                 val localSpeechTestRunner =
                     remember {
                         LocalSpeechTestRunner(modelPaths)
+                    }
+                val speechRecognizerLauncher =
+                    rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                        if (result.resultCode != Activity.RESULT_OK) {
+                            return@rememberLauncherForActivityResult
+                        }
+
+                        val transcript =
+                            result.data
+                                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                                ?.firstOrNull()
+                                ?.trim()
+
+                        if (!transcript.isNullOrBlank()) {
+                            chatViewModel.updateComposer(transcript)
+                        }
                     }
                 val localOcrImagePicker =
                     rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -279,6 +314,32 @@ class MainActivity : ComponentActivity() {
                     onPickImage = {
                         chatImagePicker.launch("image/*")
                     },
+                    onMic = {
+                        val intent =
+                            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(
+                                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
+                                )
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to translate")
+                            }
+                        try {
+                            speechRecognizerLauncher.launch(intent)
+                        } catch (_: ActivityNotFoundException) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Speech recognition is not available on this device.",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    },
+                    onSpeakTranslation = { message ->
+                        speakText(
+                            text = message.text,
+                            language = message.language ?: chatViewModel.state.value.targetLanguage,
+                        )
+                    },
                     onRunLocalTextTest = {
                         localTextTestStatus = "Running local text test..."
                         scope.launch {
@@ -330,15 +391,100 @@ class MainActivity : ComponentActivity() {
                     onImportSupertonicModel = {
                         supertonicModelPicker.launch("*/*")
                     },
+                    onDeleteModelPack = { pack ->
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                localModelImporter.deleteModelFiles(pack)
+                            }
+                            modelStore.markDeleted(pack.id)
+                            modelStateRefreshKey += 1
+                        }
+                    },
+                    onDownloadModelPack = { pack ->
+                        modelDownloadStatus = "Downloading ${pack.displayName}..."
+                        modelDownloadProgress = null
+                        modelStore.markDownloading(pack.id)
+                        modelStateRefreshKey += 1
+                        scope.launch {
+                            modelDownloadStatus =
+                                runCatching {
+                                    modelDownloader.downloadPack(pack) { progress ->
+                                        runOnUiThread {
+                                            modelDownloadProgress = progress
+                                            modelDownloadStatus =
+                                                "Downloading ${pack.displayName}: ${progress.fileName}"
+                                        }
+                                    }
+                                }.fold(
+                                    onSuccess = { files ->
+                                        modelStore.markInstalled(pack.id)
+                                        modelStateRefreshKey += 1
+                                        modelDownloadProgress = null
+                                        "Downloaded ${pack.displayName}: ${files.size} file(s)"
+                                    },
+                                    onFailure = { error ->
+                                        modelStore.markFailed(pack.id)
+                                        modelStateRefreshKey += 1
+                                        modelDownloadProgress = null
+                                        "Download failed: ${error.message}"
+                                    },
+                                )
+                        }
+                    },
                     localTextTestStatus = localTextTestStatus,
                     localOcrTestStatus = localOcrTestStatus,
                     speechTestStatus = speechTestStatus,
                     importStatus = importStatus,
                     ocrImportStatus = ocrImportStatus,
                     speechImportStatus = speechImportStatus,
+                    modelDownloadStatus = modelDownloadStatus,
+                    modelDownloadProgress = modelDownloadProgress,
                     modelStateRefreshKey = modelStateRefreshKey,
                 )
             }
         }
     }
+
+    override fun onDestroy() {
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
+        super.onDestroy()
+    }
+
+    private fun speakText(
+        text: String,
+        language: String,
+    ) {
+        if (!isTextToSpeechReady) {
+            Toast.makeText(this, "Speech is still starting.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val locale = localeForLanguage(language)
+        val result = textToSpeech?.setLanguage(locale)
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            Toast.makeText(this, "$language speech is not supported on this device.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        textToSpeech?.speak(
+            text,
+            TextToSpeech.QUEUE_FLUSH,
+            null,
+            "translation-${System.currentTimeMillis()}",
+        )
+    }
+
+    private fun localeForLanguage(language: String): Locale =
+        when (language.lowercase(Locale.US)) {
+            "filipino", "tagalog" -> Locale.Builder().setLanguage("fil").setRegion("PH").build()
+            "japanese" -> Locale.JAPANESE
+            "korean" -> Locale.KOREAN
+            "chinese" -> Locale.CHINESE
+            "spanish" -> Locale.Builder().setLanguage("es").setRegion("ES").build()
+            "french" -> Locale.FRENCH
+            "german" -> Locale.GERMAN
+            else -> Locale.ENGLISH
+        }
 }

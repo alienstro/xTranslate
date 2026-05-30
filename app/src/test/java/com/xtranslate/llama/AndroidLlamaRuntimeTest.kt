@@ -49,6 +49,55 @@ class AndroidLlamaRuntimeTest {
         }
 
     @Test
+    fun loadDoesNotReloadSameProfile() =
+        runTest {
+            val bridge = FakeNativeLlamaBridge()
+            val runtime = AndroidLlamaRuntime(bridge)
+            val profile =
+                LlamaProfile(
+                    id = "translation.multilingual.gguf",
+                    kind = LlamaProfileKind.Translation,
+                    modelPath = "/models/translator.gguf",
+                )
+
+            runtime.load(profile)
+            runtime.load(profile)
+
+            assertEquals(1, bridge.loadCount)
+            assertEquals(0, bridge.unloadCount)
+            assertEquals(profile, runtime.loadedProfile)
+        }
+
+    @Test
+    fun loadUnloadsPreviousProfileBeforeLoadingDifferentProfile() =
+        runTest {
+            val bridge = FakeNativeLlamaBridge()
+            val runtime = AndroidLlamaRuntime(bridge)
+            val translationProfile =
+                LlamaProfile(
+                    id = "translation.multilingual.gguf",
+                    kind = LlamaProfileKind.Translation,
+                    modelPath = "/models/translator.gguf",
+                )
+            val ocrProfile =
+                LlamaProfile(
+                    id = "ocr.paddleocr-vl-1_5.q4",
+                    kind = LlamaProfileKind.Ocr,
+                    modelPath = "/models/ocr.gguf",
+                    projectorPath = "/models/ocr-mmproj.gguf",
+                )
+
+            runtime.load(translationProfile)
+            runtime.load(ocrProfile)
+
+            assertEquals(2, bridge.loadCount)
+            assertEquals(1, bridge.unloadCount)
+            assertEquals(ocrProfile, runtime.loadedProfile)
+            assertEquals("/models/ocr.gguf", bridge.loadedModelPath)
+            assertEquals("/models/ocr-mmproj.gguf", bridge.loadedProjectorPath)
+        }
+
+    @Test
     fun unloadClearsProfileAndCallsNativeBridge() =
         runTest {
             val bridge = FakeNativeLlamaBridge()
@@ -76,17 +125,21 @@ private class FakeNativeLlamaBridge(
     var loadedProjectorPath: String? = null
     var lastPrompt: String? = null
     var unloaded: Boolean = false
+    var loadCount: Int = 0
+    var unloadCount: Int = 0
 
     override suspend fun loadModel(
         modelPath: String,
         projectorPath: String?,
     ) {
+        loadCount += 1
         loadedModelPath = modelPath
         loadedProjectorPath = projectorPath
         unloaded = false
     }
 
     override suspend fun unloadModel() {
+        unloadCount += 1
         unloaded = true
         loadedModelPath = null
         loadedProjectorPath = null

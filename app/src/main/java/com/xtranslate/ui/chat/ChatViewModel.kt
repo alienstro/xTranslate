@@ -160,7 +160,7 @@ class ChatViewModel(
     }
 
     private fun showError(error: Throwable) {
-        val message = error.message ?: "Something went wrong."
+        val message = error.message ?: "Local AI error: ${error::class.java.simpleName}"
         mutableState.update {
             it.copy(
                 isBusy = false,

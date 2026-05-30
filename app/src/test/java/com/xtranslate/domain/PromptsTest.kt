@@ -33,6 +33,7 @@ class PromptsTest {
         assertTrue(prompt.contains("Filipino"))
         assertTrue(prompt.contains("English"))
         assertTrue(prompt.contains("Hello"))
-        assertTrue(prompt.contains("only the translation", ignoreCase = true))
+        assertTrue(prompt.contains("only the translated text", ignoreCase = true))
+        assertTrue(prompt.contains("Do not copy the source text", ignoreCase = true))
     }
 }

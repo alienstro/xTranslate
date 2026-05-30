@@ -14,7 +14,7 @@ class LocalModelPathsTest {
         val paths = LocalModelPaths(filesDir)
 
         assertEquals(
-            "/data/user/0/com.xtranslate/files/models/translation/multilingual-translator.gguf",
+            "/data/user/0/com.xtranslate/files/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf",
             paths.translationModelFile().path.replace('\\', '/'),
         )
     }
@@ -29,7 +29,7 @@ class LocalModelPathsTest {
         val ocrPack = packs.first { it.id == "ocr.paddleocr-vl-1_5.q4" }
 
         assertEquals(
-            "/data/user/0/com.xtranslate/files/models/translation/multilingual-translator.gguf",
+            "/data/user/0/com.xtranslate/files/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf",
             paths.modelFiles(translationPack).single().path.replace('\\', '/'),
         )
         assertEquals(

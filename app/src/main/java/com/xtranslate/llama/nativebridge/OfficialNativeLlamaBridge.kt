@@ -3,7 +3,10 @@ package com.xtranslate.llama.nativebridge
 import android.content.Context
 import com.arm.aichat.AiChat
 import com.arm.aichat.InferenceEngine
+import com.arm.aichat.UnsupportedArchitectureException
+import com.arm.aichat.gguf.GgufMetadataReader
 import kotlinx.coroutines.flow.Flow
+import java.io.File
 
 /**
  * Native bridge backed by the official llama.cpp Android library.
@@ -24,7 +27,25 @@ class OfficialNativeLlamaBridge(
         require(projectorPath == null) {
             "Projector/image input is not wired yet. Use text-only profiles first."
         }
-        engine.loadModel(modelPath)
+        resetErrorStateIfNeeded()
+        unloadReadyModelIfNeeded()
+        val arch = readGgufArchitecture(modelPath)
+        val fileSizeMb = File(modelPath).length() / 1_048_576
+        try {
+            engine.loadModel(modelPath)
+        } catch (error: UnsupportedArchitectureException) {
+            resetErrorStateIfNeeded()
+            val archDetail = if (arch != null) " (arch: '$arch', ${fileSizeMb}MB)" else " (${fileSizeMb}MB)"
+            throw IllegalStateException(
+                "Failed to load GGUF model$archDetail. " +
+                    "The model may be too large for available device memory. " +
+                    "Try Qwen2.5 0.5B Q4_K_M from the Models tab.",
+                error,
+            )
+        } catch (error: Exception) {
+            resetErrorStateIfNeeded()
+            throw error
+        }
     }
 
     override suspend fun unloadModel() {
@@ -40,4 +61,25 @@ class OfficialNativeLlamaBridge(
         }
         return engine.sendUserPrompt(prompt)
     }
+
+    private fun resetErrorStateIfNeeded() {
+        if (engine.state.value is InferenceEngine.State.Error) {
+            engine.cleanUp()
+        }
+    }
+
+    private fun unloadReadyModelIfNeeded() {
+        if (engine.state.value is InferenceEngine.State.ModelReady) {
+            engine.cleanUp()
+        }
+    }
+
+    private suspend fun readGgufArchitecture(modelPath: String): String? =
+        try {
+            File(modelPath).inputStream().buffered().use { stream ->
+                GgufMetadataReader.create().readStructuredMetadata(stream).architecture?.architecture
+            }
+        } catch (_: Exception) {
+            null
+        }
 }

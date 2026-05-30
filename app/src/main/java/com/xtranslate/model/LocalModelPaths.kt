@@ -8,7 +8,7 @@ import java.io.File
 class LocalModelPaths(
     private val filesDir: File,
 ) {
-    fun translationModelFile(): File = File(filesDir, "models/translation/multilingual-translator.gguf")
+    fun translationModelFile(): File = File(filesDir, "models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf")
 
     fun whisperModelFile(): File = File(filesDir, "models/stt/whisper.bin")
 

@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <cmath>
 #include <string>
+#include <vector>
 #include <unistd.h>
 #include <sampling.h>
 
@@ -39,6 +40,28 @@ static llama_batch                        g_batch;
 static common_chat_templates_ptr          g_chat_templates;
 static common_sampler                   * g_sampler;
 
+static void load_android_cpu_backends(const std::string & native_lib_dir) {
+    const std::vector<std::string> backend_names = {
+            "libggml-cpu-android_armv9.2_2.so",
+            "libggml-cpu-android_armv9.2_1.so",
+            "libggml-cpu-android_armv9.0_1.so",
+            "libggml-cpu-android_armv8.6_1.so",
+            "libggml-cpu-android_armv8.2_2.so",
+            "libggml-cpu-android_armv8.2_1.so",
+            "libggml-cpu-android_armv8.0_1.so",
+            "libggml-cpu.so",
+    };
+
+    for (const auto & backend_name : backend_names) {
+        const std::string backend_path = native_lib_dir + "/" + backend_name;
+        LOGi("Trying backend: %s", backend_path.c_str());
+        if (ggml_backend_load(backend_path.c_str()) != nullptr) {
+            LOGi("Loaded backend: %s", backend_path.c_str());
+            return;
+        }
+    }
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_arm_aichat_internal_InferenceEngineImpl_init(JNIEnv *env, jobject /*unused*/, jstring nativeLibDir) {
@@ -49,6 +72,10 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_init(JNIEnv *env, jobject /*unu
     const auto *path_to_backend = env->GetStringUTFChars(nativeLibDir, 0);
     LOGi("Loading backends from %s", path_to_backend);
     ggml_backend_load_all_from_path(path_to_backend);
+    if (ggml_backend_reg_count() == 0) {
+        load_android_cpu_backends(path_to_backend);
+    }
+    LOGi("Backend registry count: %zu", ggml_backend_reg_count());
     env->ReleaseStringUTFChars(nativeLibDir, path_to_backend);
 
     // Initialize backends

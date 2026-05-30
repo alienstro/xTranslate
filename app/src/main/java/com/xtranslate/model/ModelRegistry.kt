@@ -45,25 +45,46 @@ object ModelRegistry {
                 engineType = EngineType.LlamaOcr,
                 files =
                     listOf(
-                        ModelFile(name = "paddleocr-vl-1.5-q4.gguf"),
-                        ModelFile(name = "paddleocr-vl-1.5-mmproj.gguf"),
+                        ModelFile(
+                            name = "paddleocr-vl-1.5-q4.gguf",
+                            downloadUrl =
+                                "https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.5-GGUF/resolve/main/PaddleOCR-VL-1.5.gguf",
+                        ),
+                        ModelFile(
+                            name = "paddleocr-vl-1.5-mmproj.gguf",
+                            downloadUrl =
+                                "https://huggingface.co/PaddlePaddle/PaddleOCR-VL-1.5-GGUF/resolve/main/PaddleOCR-VL-1.5-mmproj.gguf",
+                        ),
                     ),
                 expectedSizeMb = null,
                 minimumRamTier = RamTier.Low,
             ),
             ModelPack(
                 id = "translation.multilingual.gguf",
-                displayName = "Broad Multilingual Translator",
+                displayName = "Qwen2.5 0.5B Translator",
                 engineType = EngineType.LlamaTranslation,
-                files = listOf(ModelFile(name = "multilingual-translator.gguf")),
-                expectedSizeMb = null,
+                files =
+                    listOf(
+                        ModelFile(
+                            name = "qwen2.5-0.5b-translator-q4_k_m.gguf",
+                            downloadUrl =
+                                "https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf",
+                        ),
+                    ),
+                expectedSizeMb = 398,
                 minimumRamTier = RamTier.Low,
             ),
             ModelPack(
                 id = "stt.whisper",
                 displayName = "Whisper STT",
                 engineType = EngineType.WhisperStt,
-                files = listOf(ModelFile(name = "whisper.bin")),
+                files =
+                    listOf(
+                        ModelFile(
+                            name = "whisper.bin",
+                            downloadUrl = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin",
+                        ),
+                    ),
                 expectedSizeMb = null,
                 minimumRamTier = RamTier.Low,
             ),
@@ -71,7 +92,14 @@ object ModelRegistry {
                 id = "tts.supertonic-3",
                 displayName = "Supertonic 3 TTS",
                 engineType = EngineType.OnnxTts,
-                files = listOf(ModelFile(name = "supertonic-3.onnx")),
+                files =
+                    listOf(
+                        ModelFile(
+                            name = "supertonic-3.onnx",
+                            downloadUrl =
+                                "https://huggingface.co/Supertone/supertonic-3/resolve/main/onnx/vector_estimator.onnx",
+                        ),
+                    ),
                 expectedSizeMb = null,
                 minimumRamTier = RamTier.Medium,
             ),

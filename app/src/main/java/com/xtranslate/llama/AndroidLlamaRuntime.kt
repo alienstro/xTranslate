@@ -18,6 +18,13 @@ class AndroidLlamaRuntime(
         get() = currentProfile
 
     override suspend fun load(profile: LlamaProfile) {
+        if (currentProfile == profile) {
+            return
+        }
+        if (currentProfile != null) {
+            bridge.unloadModel()
+            currentProfile = null
+        }
         bridge.loadModel(
             modelPath = profile.modelPath,
             projectorPath = profile.projectorPath,

@@ -23,6 +23,8 @@ interface ModelStore {
     fun markInstalled(modelId: String)
 
     fun markFailed(modelId: String)
+
+    fun markDeleted(modelId: String)
 }
 
 class InMemoryModelStore(
@@ -47,6 +49,10 @@ class InMemoryModelStore(
 
     override fun markFailed(modelId: String) {
         states[modelId] = ModelInstallState.Failed
+    }
+
+    override fun markDeleted(modelId: String) {
+        states[modelId] = ModelInstallState.Missing
     }
 }
 
@@ -83,5 +89,9 @@ class FileBackedModelStore(
 
     override fun markFailed(modelId: String) {
         temporaryStates[modelId] = ModelInstallState.Failed
+    }
+
+    override fun markDeleted(modelId: String) {
+        temporaryStates.remove(modelId)
     }
 }
