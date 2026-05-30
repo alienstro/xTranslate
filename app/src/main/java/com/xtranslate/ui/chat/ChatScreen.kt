@@ -65,6 +65,7 @@ fun ChatScreen(
     state: ChatUiState,
     isRecordingVoice: Boolean,
     onComposerChange: (String) -> Unit,
+    onSourceLanguageChange: (String) -> Unit,
     onTargetLanguageChange: (String) -> Unit,
     onSend: () -> Unit,
     onImage: () -> Unit,
@@ -118,10 +119,12 @@ fun ChatScreen(
 
         ChatComposer(
             text = state.composerText,
+            sourceLanguage = state.sourceLanguage,
             targetLanguage = state.targetLanguage,
             isBusy = state.isBusy,
             isRecordingVoice = isRecordingVoice,
             onTextChange = onComposerChange,
+            onSourceLanguageChange = onSourceLanguageChange,
             onTargetLanguageChange = onTargetLanguageChange,
             onSend = onSend,
             onImage = onImage,
@@ -298,10 +301,12 @@ private fun SystemMessage(text: String) {
 @Composable
 private fun ChatComposer(
     text: String,
+    sourceLanguage: String,
     targetLanguage: String,
     isBusy: Boolean,
     isRecordingVoice: Boolean,
     onTextChange: (String) -> Unit,
+    onSourceLanguageChange: (String) -> Unit,
     onTargetLanguageChange: (String) -> Unit,
     onSend: () -> Unit,
     onImage: () -> Unit,
@@ -330,17 +335,21 @@ private fun ChatComposer(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                LanguagePicker(
+                    selectedLanguage = sourceLanguage,
+                    onLanguageChange = onSourceLanguageChange,
+                )
                 Text(
-                    text = "Translate to",
+                    text = "→",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TargetLanguagePicker(
+                LanguagePicker(
                     selectedLanguage = targetLanguage,
-                    onTargetLanguageChange = onTargetLanguageChange,
+                    onLanguageChange = onTargetLanguageChange,
                 )
             }
 
@@ -508,9 +517,9 @@ private fun RecordingPill(
 }
 
 @Composable
-private fun TargetLanguagePicker(
+private fun LanguagePicker(
     selectedLanguage: String,
-    onTargetLanguageChange: (String) -> Unit,
+    onLanguageChange: (String) -> Unit,
 ) {
     val languages = listOf(
         "English", "Filipino", "Japanese", "Korean",
@@ -548,7 +557,7 @@ private fun TargetLanguagePicker(
                 DropdownMenuItem(
                     text = { Text(language) },
                     onClick = {
-                        onTargetLanguageChange(language)
+                        onLanguageChange(language)
                         expanded = false
                     },
                 )

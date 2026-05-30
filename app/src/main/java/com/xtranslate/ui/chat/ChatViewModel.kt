@@ -31,6 +31,10 @@ class ChatViewModel(
         mutableState.update { it.copy(composerText = text) }
     }
 
+    fun updateSourceLanguage(language: String) {
+        mutableState.update { it.copy(sourceLanguage = language) }
+    }
+
     fun updateTargetLanguage(language: String) {
         mutableState.update { it.copy(targetLanguage = language) }
     }

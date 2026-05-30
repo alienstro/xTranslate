@@ -23,6 +23,7 @@ data class ChatMessage(
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val composerText: String = "",
+    val sourceLanguage: String = "Filipino",
     val targetLanguage: String = "English",
     val isBusy: Boolean = false,
     val selectedTab: AppTab = AppTab.Chat,

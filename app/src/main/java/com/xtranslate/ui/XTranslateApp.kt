@@ -107,6 +107,7 @@ fun XTranslateApp(
                         state = state,
                         isRecordingVoice = isRecordingVoice,
                         onComposerChange = chatViewModel::updateComposer,
+                        onSourceLanguageChange = chatViewModel::updateSourceLanguage,
                         onTargetLanguageChange = chatViewModel::updateTargetLanguage,
                         onSend = chatViewModel::sendText,
                         onImage = onPickImage,

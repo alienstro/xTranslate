@@ -315,12 +315,14 @@ class MainActivity : ComponentActivity() {
                     },
                     isRecordingVoice = false,
                     onMic = {
+                        val sourceLang = chatViewModel.state.value.sourceLanguage
                         val intent =
                             Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                                 putExtra(
                                     RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                                     RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
                                 )
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, localeTagForLanguage(sourceLang))
                                 putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to translate")
                             }
                         try {
@@ -477,6 +479,18 @@ class MainActivity : ComponentActivity() {
             "translation-${System.currentTimeMillis()}",
         )
     }
+
+    private fun localeTagForLanguage(language: String): String =
+        when (language.lowercase(Locale.US)) {
+            "filipino", "tagalog" -> "fil-PH"
+            "japanese" -> "ja-JP"
+            "korean" -> "ko-KR"
+            "chinese" -> "zh-CN"
+            "spanish" -> "es-ES"
+            "french" -> "fr-FR"
+            "german" -> "de-DE"
+            else -> "en-US"
+        }
 
     private fun localeForLanguage(language: String): Locale =
         when (language.lowercase(Locale.US)) {
