@@ -136,7 +136,6 @@ class MainActivity : ComponentActivity() {
                     val outputFile = File(cacheDir, "voice-input/latest.wav")
                     voiceRecordingStartedAt = System.currentTimeMillis()
                     isRecordingVoice = true
-                    Toast.makeText(this@MainActivity, "Recording voice input...", Toast.LENGTH_SHORT).show()
                     scope.launch {
                         audioRecorder.startRecording(outputFile) { error ->
                             runOnUiThread {

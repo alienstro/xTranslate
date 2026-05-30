@@ -120,14 +120,45 @@ class ChatViewModel(
             )
         }
         viewModelScope.launch {
-            runCatching {
+            val transcript = runCatching {
                 engineCoordinator.transcribe(audio)
+            }.getOrElse { error ->
+                showError(error)
+                return@launch
+            }
+
+            if (transcript.isBlank()) {
+                mutableState.update { it.copy(isBusy = false) }
+                return@launch
+            }
+
+            val targetLanguage = state.value.targetLanguage
+            mutableState.update {
+                it.copy(
+                    isBusy = true,
+                    messages = it.messages + ChatMessage(nextId++, ChatMessageKind.Source, transcript),
+                )
+            }
+            runCatching {
+                engineCoordinator.translateText(
+                    TranslationRequest(
+                        sourceText = transcript,
+                        targetLanguage = targetLanguage,
+                    ),
+                )
             }.fold(
-                onSuccess = { transcript ->
+                onSuccess = { result ->
                     mutableState.update {
                         it.copy(
                             isBusy = false,
-                            composerText = transcript,
+                            messages =
+                                it.messages +
+                                    ChatMessage(
+                                        id = nextId++,
+                                        kind = ChatMessageKind.Translation,
+                                        text = result.translatedText,
+                                        language = result.targetLanguage,
+                                    ),
                         )
                     }
                 },

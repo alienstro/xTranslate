@@ -181,27 +181,35 @@ class ChatViewModelTest {
         }
 
     @Test
-    fun transcribeVoicePlaceholderPutsTranscriptInComposer() =
+    fun transcribeVoicePlaceholderTranscribesAndAutoTranslates() =
         runTest {
             val viewModel = ChatViewModel(fakeCoordinator())
 
             viewModel.transcribeVoicePlaceholder()
             advanceUntilIdle()
 
-            assertEquals("Voice transcript", viewModel.state.value.composerText)
             assertEquals(false, viewModel.state.value.isBusy)
+            val messages = viewModel.state.value.messages
+            assertEquals(2, messages.size)
+            assertEquals(ChatMessageKind.Source, messages[0].kind)
+            assertEquals("Voice transcript", messages[0].text)
+            assertEquals(ChatMessageKind.Translation, messages[1].kind)
         }
 
     @Test
-    fun transcribeAudioPutsTranscriptInComposer() =
+    fun transcribeAudioTranscribesAndAutoTranslates() =
         runTest {
             val viewModel = ChatViewModel(fakeCoordinator())
 
             viewModel.transcribeAudio(AudioInput(uri = "recordings/latest.wav", durationMillis = 1000L))
             advanceUntilIdle()
 
-            assertEquals("Voice transcript", viewModel.state.value.composerText)
             assertEquals(false, viewModel.state.value.isBusy)
+            val messages = viewModel.state.value.messages
+            assertEquals(2, messages.size)
+            assertEquals(ChatMessageKind.Source, messages[0].kind)
+            assertEquals("Voice transcript", messages[0].text)
+            assertEquals(ChatMessageKind.Translation, messages[1].kind)
         }
 
     @Test
@@ -279,8 +287,12 @@ class ChatViewModelTest {
             viewModel.transcribeAudio(AudioInput(uri = "cache/second.wav", durationMillis = 1000L))
             advanceUntilIdle()
 
-            assertEquals("Hello from Whisper", viewModel.state.value.composerText)
             assertEquals(AppTab.Chat, viewModel.state.value.selectedTab)
+            assertTrue(
+                viewModel.state.value.messages.any {
+                    it.kind == ChatMessageKind.Source && it.text == "Hello from Whisper"
+                },
+            )
             assertTrue(
                 viewModel.state.value.messages.none {
                     it.kind == ChatMessageKind.System &&
