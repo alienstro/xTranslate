@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Image
@@ -36,12 +38,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -298,6 +304,7 @@ private fun SystemMessage(text: String) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChatComposer(
     text: String,
@@ -313,6 +320,7 @@ private fun ChatComposer(
     onMic: () -> Unit,
 ) {
     var elapsedSeconds by remember { mutableIntStateOf(0) }
+    var showSourceLangSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(isRecordingVoice) {
         if (isRecordingVoice) {
@@ -338,12 +346,8 @@ private fun ChatComposer(
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                LanguagePicker(
-                    selectedLanguage = sourceLanguage,
-                    onLanguageChange = onSourceLanguageChange,
-                )
                 Text(
-                    text = "→",
+                    text = "Translate to",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -413,7 +417,7 @@ private fun ChatComposer(
                         modifier = Modifier.weight(1f),
                     )
                 } else {
-                    IconButton(onClick = onMic) {
+                    IconButton(onClick = { showSourceLangSheet = true }) {
                         Icon(
                             imageVector = Icons.Outlined.Mic,
                             contentDescription = "Voice input",
@@ -446,6 +450,18 @@ private fun ChatComposer(
                 }
             }
         }
+    }
+
+    if (showSourceLangSheet) {
+        SourceLanguageSheet(
+            currentLanguage = sourceLanguage,
+            onLanguageSelected = { lang ->
+                onSourceLanguageChange(lang)
+                showSourceLangSheet = false
+                onMic()
+            },
+            onDismiss = { showSourceLangSheet = false },
+        )
     }
 }
 
@@ -512,6 +528,88 @@ private fun RecordingPill(
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onError,
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SourceLanguageSheet(
+    currentLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val languages = listOf(
+        "English", "Filipino", "Japanese", "Korean",
+        "Chinese", "Spanish", "French", "German",
+    )
+    val flags = mapOf(
+        "English" to "🇺🇸",
+        "Filipino" to "🇵🇭",
+        "Japanese" to "🇯🇵",
+        "Korean" to "🇰🇷",
+        "Chinese" to "🇨🇳",
+        "Spanish" to "🇪🇸",
+        "French" to "🇫🇷",
+        "German" to "🇩🇪",
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+    ) {
+        Column(modifier = Modifier.padding(bottom = 32.dp)) {
+            Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 16.dp)) {
+                Text(
+                    text = "Speaking in",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "Choose the language you'll speak",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+            languages.forEach { language ->
+                val isSelected = language == currentLanguage
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                            else Color.Transparent,
+                        )
+                        .clickable { onLanguageSelected(language) }
+                        .padding(horizontal = 24.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Text(
+                        text = flags[language] ?: "🌐",
+                        fontSize = 22.sp,
+                    )
+                    Text(
+                        text = language,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }

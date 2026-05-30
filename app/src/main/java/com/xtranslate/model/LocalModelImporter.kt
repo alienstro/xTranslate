@@ -18,9 +18,6 @@ class LocalModelImporter(
     fun importOcrProjector(inputStream: InputStream): File =
         copyToModelFile(inputStream, File(modelPaths.modelDirectory(ocrPack()), "paddleocr-vl-1.5-mmproj.gguf"))
 
-    fun importWhisperModel(inputStream: InputStream): File =
-        copyToModelFile(inputStream, modelPaths.whisperModelFile())
-
     fun importSupertonicModel(inputStream: InputStream): File =
         copyToModelFile(inputStream, modelPaths.supertonicModelFile())
 

@@ -60,21 +60,6 @@ class LocalModelImporterTest {
     }
 
     @Test
-    fun importWhisperModelCopiesBytesIntoSttModelFile() {
-        val paths = LocalModelPaths(temporaryFolder.root)
-        val importer = LocalModelImporter(paths)
-
-        val targetFile =
-            importer.importWhisperModel(
-                ByteArrayInputStream("fake whisper bytes".toByteArray()),
-            )
-
-        assertEquals("ggml-large-v3-turbo-q8_0.bin", targetFile.name)
-        assertTrue(targetFile.path.replace('\\', '/').endsWith("/models/stt/ggml-large-v3-turbo-q8_0.bin"))
-        assertEquals("fake whisper bytes", targetFile.readText())
-    }
-
-    @Test
     fun importSupertonicModelCopiesBytesIntoTtsModelFile() {
         val paths = LocalModelPaths(temporaryFolder.root)
         val importer = LocalModelImporter(paths)

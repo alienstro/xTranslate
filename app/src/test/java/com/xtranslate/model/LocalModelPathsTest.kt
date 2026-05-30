@@ -14,7 +14,7 @@ class LocalModelPathsTest {
         val paths = LocalModelPaths(filesDir)
 
         assertEquals(
-            "/data/user/0/com.xtranslate/files/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf",
+            "/data/user/0/com.xtranslate/files/models/translation/Hy-MT2-1.8B-Q4_K_M.gguf",
             paths.translationModelFile().path.replace('\\', '/'),
         )
     }
@@ -29,7 +29,7 @@ class LocalModelPathsTest {
         val ocrPack = packs.first { it.id == "ocr.paddleocr-vl-1_5.q4" }
 
         assertEquals(
-            "/data/user/0/com.xtranslate/files/models/translation/qwen2.5-0.5b-translator-q4_k_m.gguf",
+            "/data/user/0/com.xtranslate/files/models/translation/Hy-MT2-1.8B-Q4_K_M.gguf",
             paths.modelFiles(translationPack).single().path.replace('\\', '/'),
         )
         assertEquals(
@@ -42,14 +42,10 @@ class LocalModelPathsTest {
     }
 
     @Test
-    fun speechModelPathsUseAppPrivateSpeechDirectories() {
+    fun supertonicModelPathUsesAppPrivateTtsDirectory() {
         val filesDir = File("/data/user/0/com.xtranslate/files")
         val paths = LocalModelPaths(filesDir)
 
-        assertEquals(
-            "/data/user/0/com.xtranslate/files/models/stt/ggml-large-v3-turbo-q8_0.bin",
-            paths.whisperModelFile().path.replace('\\', '/'),
-        )
         assertEquals(
             "/data/user/0/com.xtranslate/files/models/tts/supertonic-3.onnx",
             paths.supertonicModelFile().path.replace('\\', '/'),

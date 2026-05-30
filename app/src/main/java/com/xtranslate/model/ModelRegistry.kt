@@ -10,7 +10,6 @@ package com.xtranslate.model
 enum class EngineType {
     LlamaOcr,
     LlamaTranslation,
-    WhisperStt,
     OnnxTts,
 }
 
@@ -61,33 +60,18 @@ object ModelRegistry {
             ),
             ModelPack(
                 id = "translation.multilingual.gguf",
-                displayName = "Qwen2.5 0.5B Translator",
+                displayName = "Hy-MT2 1.8B Multilingual Translator",
                 engineType = EngineType.LlamaTranslation,
                 files =
                     listOf(
                         ModelFile(
-                            name = "qwen2.5-0.5b-translator-q4_k_m.gguf",
+                            name = "Hy-MT2-1.8B-Q4_K_M.gguf",
                             downloadUrl =
-                                "https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/Qwen2.5-0.5B-Instruct-Q4_K_M.gguf",
+                                "https://huggingface.co/unsloth/Hy-MT2-1.8B-GGUF/resolve/main/Hy-MT2-1.8B-Q4_K_M.gguf",
                         ),
                     ),
-                expectedSizeMb = 398,
+                expectedSizeMb = 1156,
                 minimumRamTier = RamTier.Low,
-            ),
-            ModelPack(
-                id = "stt.whisper",
-                displayName = "Whisper Large v3 Turbo Q8",
-                engineType = EngineType.WhisperStt,
-                files =
-                    listOf(
-                        ModelFile(
-                            name = "ggml-large-v3-turbo-q8_0.bin",
-                            downloadUrl =
-                                "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin",
-                        ),
-                    ),
-                expectedSizeMb = 900,
-                minimumRamTier = RamTier.High,
             ),
             ModelPack(
                 id = "tts.supertonic-3",

@@ -117,12 +117,7 @@ class ChatViewModel(
     }
 
     fun transcribeAudio(audio: AudioInput) {
-        mutableState.update {
-            it.copy(
-                isBusy = true,
-                messages = it.messages.filterNot(::isMissingWhisperModelMessage),
-            )
-        }
+        mutableState.update { it.copy(isBusy = true) }
         viewModelScope.launch {
             val transcript = runCatching {
                 engineCoordinator.transcribe(audio)
@@ -168,12 +163,6 @@ class ChatViewModel(
                 },
                 onFailure = { error -> showError(error) },
             )
-        }
-    }
-
-    fun clearMissingWhisperModelMessages() {
-        mutableState.update {
-            it.copy(messages = it.messages.filterNot(::isMissingWhisperModelMessage))
         }
     }
 
@@ -247,7 +236,4 @@ class ChatViewModel(
         }
     }
 
-    private fun isMissingWhisperModelMessage(message: ChatMessage): Boolean =
-        message.kind == ChatMessageKind.System &&
-            message.text.contains("Missing Whisper model file")
 }

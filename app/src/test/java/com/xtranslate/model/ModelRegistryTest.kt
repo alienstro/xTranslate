@@ -18,28 +18,13 @@ class ModelRegistryTest {
     val temporaryFolder = TemporaryFolder()
 
     @Test
-    fun defaultRegistryContainsFourModelPacks() {
+    fun defaultRegistryContainsThreeModelPacks() {
         val packs = ModelRegistry.defaultPacks()
 
-        assertEquals(4, packs.size)
+        assertEquals(3, packs.size)
         assertTrue(packs.any { it.id == "ocr.paddleocr-vl-1_5.q4" })
         assertTrue(packs.any { it.id == "translation.multilingual.gguf" })
-        assertTrue(packs.any { it.id == "stt.whisper" })
         assertTrue(packs.any { it.id == "tts.supertonic-3" })
-    }
-
-    @Test
-    fun speechPackUsesWhisperLargeV3TurboQ8() {
-        val pack = ModelRegistry.defaultPacks().first { it.id == "stt.whisper" }
-
-        assertEquals("Whisper Large v3 Turbo Q8", pack.displayName)
-        assertEquals(900, pack.expectedSizeMb)
-        assertEquals(RamTier.High, pack.minimumRamTier)
-        assertEquals("ggml-large-v3-turbo-q8_0.bin", pack.files.single().name)
-        assertEquals(
-            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q8_0.bin",
-            pack.files.single().downloadUrl,
-        )
     }
 
     @Test

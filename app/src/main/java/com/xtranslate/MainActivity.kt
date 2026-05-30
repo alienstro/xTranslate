@@ -25,18 +25,16 @@ import com.xtranslate.llama.LlamaProfileFactory
 import com.xtranslate.llama.LlamaTranslationEngine
 import com.xtranslate.llama.nativebridge.OfficialNativeLlamaBridge
 import com.xtranslate.model.FileBackedModelStore
-import com.xtranslate.model.EngineType
 import com.xtranslate.model.LocalModelImporter
 import com.xtranslate.model.LocalModelPaths
 import com.xtranslate.model.ModelDownloader
 import com.xtranslate.model.ModelDownloadProgress
 import com.xtranslate.model.ModelRegistry
 import com.xtranslate.runtime.EngineCoordinator
-import com.xtranslate.runtime.FileBackedSpeechToTextEngine
+import com.xtranslate.runtime.FakeSpeechToTextEngine
 import com.xtranslate.runtime.FileBackedTextToSpeechEngine
 import com.xtranslate.runtime.FakeTextToSpeechEngine
 import com.xtranslate.runtime.LocalSpeechTestRunner
-import com.xtranslate.runtime.WhisperCppSpeechToTextEngine
 import com.xtranslate.ui.XTranslateApp
 import com.xtranslate.ui.chat.ChatViewModel
 import com.xtranslate.ui.theme.XTranslateAppTheme
@@ -75,11 +73,7 @@ class MainActivity : ComponentActivity() {
                         runtime = AndroidLlamaRuntime(OfficialNativeLlamaBridge(this)),
                         profile = LlamaProfileFactory.translationProfile(modelPaths.translationModelFile()),
                     ),
-                sttEngine =
-                    FileBackedSpeechToTextEngine(
-                        modelFile = modelPaths.whisperModelFile(),
-                        delegate = WhisperCppSpeechToTextEngine(modelPaths.whisperModelFile()),
-                    ),
+                sttEngine = FakeSpeechToTextEngine(),
                 ttsEngine =
                     FileBackedTextToSpeechEngine(
                         modelFile = modelPaths.supertonicModelFile(),
@@ -250,34 +244,6 @@ class MainActivity : ComponentActivity() {
                                 )
                         }
                     }
-                val whisperModelPicker =
-                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-                        if (uri == null) {
-                            speechImportStatus = "Speech import cancelled"
-                            return@rememberLauncherForActivityResult
-                        }
-
-                        speechImportStatus = "Importing Whisper STT..."
-                        scope.launch {
-                            speechImportStatus =
-                                runCatching {
-                                    withContext(Dispatchers.IO) {
-                                        val inputStream =
-                                            requireNotNull(contentResolver.openInputStream(uri)) {
-                                                "Could not open selected file"
-                                            }
-                                        localModelImporter.importWhisperModel(inputStream)
-                                    }
-                                }.fold(
-                                    onSuccess = { file ->
-                                        chatViewModel.clearMissingWhisperModelMessages()
-                                        modelStateRefreshKey += 1
-                                        "Imported Whisper STT: ${file.name}"
-                                    },
-                                    onFailure = { error -> "Speech import failed: ${error.message}" },
-                                )
-                        }
-                    }
                 val supertonicModelPicker =
                     rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
                         if (uri == null) {
@@ -355,17 +321,7 @@ class MainActivity : ComponentActivity() {
                     onRunLocalOcrTest = {
                         localOcrImagePicker.launch("image/*")
                     },
-                    onRunLocalSttTest = {
-                        speechTestStatus = "Running local STT test..."
-                        scope.launch {
-                            speechTestStatus =
-                                runCatching { localSpeechTestRunner.transcribeSampleAudio() }
-                                    .fold(
-                                        onSuccess = { result -> "STT result: $result" },
-                                        onFailure = { error -> "STT error: ${error.message}" },
-                                    )
-                        }
-                    },
+                    onRunLocalSttTest = { },
                     onRunLocalTtsTest = {
                         speechTestStatus = "Running local TTS test..."
                         scope.launch {
@@ -385,9 +341,6 @@ class MainActivity : ComponentActivity() {
                     },
                     onImportOcrProjector = {
                         ocrProjectorPicker.launch("*/*")
-                    },
-                    onImportWhisperModel = {
-                        whisperModelPicker.launch("*/*")
                     },
                     onImportSupertonicModel = {
                         supertonicModelPicker.launch("*/*")
@@ -418,9 +371,6 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }.fold(
                                     onSuccess = { files ->
-                                        if (pack.engineType == EngineType.WhisperStt) {
-                                            chatViewModel.clearMissingWhisperModelMessages()
-                                        }
                                         modelStore.markInstalled(pack.id)
                                         modelStateRefreshKey += 1
                                         modelDownloadProgress = null

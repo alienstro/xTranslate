@@ -51,8 +51,8 @@ class ModelDownloaderTest {
                 ModelPack(
                     id = "test.pack",
                     displayName = "Test Pack",
-                    engineType = EngineType.WhisperStt,
-                    files = listOf(ModelFile(name = "whisper.bin", downloadUrl = "https://example.test/whisper.bin")),
+                    engineType = EngineType.OnnxTts,
+                    files = listOf(ModelFile(name = "model.onnx", downloadUrl = "https://example.test/model.onnx")),
                     minimumRamTier = RamTier.Low,
                 )
             val progressEvents = mutableListOf<ModelDownloadProgress>()
@@ -63,7 +63,7 @@ class ModelDownloaderTest {
             }
 
             assertEquals(2, progressEvents.size)
-            assertEquals("whisper.bin", progressEvents.first().fileName)
+            assertEquals("model.onnx", progressEvents.first().fileName)
             assertEquals(0L, progressEvents.first().bytesDownloaded)
             assertEquals(100L, progressEvents.last().bytesDownloaded)
             assertEquals(100L, progressEvents.last().totalBytes)

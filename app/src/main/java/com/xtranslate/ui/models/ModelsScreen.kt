@@ -51,7 +51,6 @@ fun ModelsScreen(
     onImportTranslationModel: () -> Unit,
     onImportOcrModel: () -> Unit,
     onImportOcrProjector: () -> Unit,
-    onImportWhisperModel: () -> Unit,
     onImportSupertonicModel: () -> Unit,
     onDownloadModelPack: (ModelPack) -> Unit,
     onDeleteModelPack: (ModelPack) -> Unit,
@@ -109,7 +108,6 @@ fun ModelsScreen(
                 val importAction: (() -> Unit)? = when (pack.id) {
                     "translation.multilingual.gguf" -> onImportTranslationModel
                     "ocr.paddleocr-vl-1_5.q4" -> onImportOcrModel
-                    "stt.whisper" -> onImportWhisperModel
                     "tts.supertonic-3" -> onImportSupertonicModel
                     else -> null
                 }

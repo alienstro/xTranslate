@@ -218,7 +218,7 @@ class ChatViewModelTest {
             val viewModel =
                 ChatViewModel(
                     fakeCoordinator(
-                        sttEngine = FailingSpeechToTextEngine("Missing Whisper model file"),
+                        sttEngine = FailingSpeechToTextEngine("Missing STT model file"),
                     ),
                 )
 
@@ -230,7 +230,7 @@ class ChatViewModelTest {
             assertTrue(
                 viewModel.state.value.messages.any {
                     it.kind == ChatMessageKind.System &&
-                        it.text.contains("Missing Whisper model file")
+                        it.text.contains("Missing STT model file")
                 },
             )
         }
@@ -254,49 +254,6 @@ class ChatViewModelTest {
                 viewModel.state.value.messages.any {
                     it.kind == ChatMessageKind.System &&
                         it.text.contains("Missing audio file: cache/voice.wav")
-                },
-            )
-        }
-
-    @Test
-    fun transcribeAudioRetryClearsStaleMissingWhisperMessage() =
-        runTest {
-            val viewModel =
-                ChatViewModel(
-                    fakeCoordinator(
-                        sttEngine =
-                            QueueSpeechToTextEngine(
-                                listOf(
-                                    Result.failure(IllegalStateException("Missing Whisper model file: models/stt/model.bin")),
-                                    Result.success(Transcript("Hello from Whisper")),
-                                ),
-                            ),
-                    ),
-                )
-
-            viewModel.transcribeAudio(AudioInput(uri = "cache/first.wav", durationMillis = 1000L))
-            advanceUntilIdle()
-            assertTrue(
-                viewModel.state.value.messages.any {
-                    it.kind == ChatMessageKind.System &&
-                        it.text.contains("Missing Whisper model file")
-                },
-            )
-
-            viewModel.selectTab(AppTab.Chat)
-            viewModel.transcribeAudio(AudioInput(uri = "cache/second.wav", durationMillis = 1000L))
-            advanceUntilIdle()
-
-            assertEquals(AppTab.Chat, viewModel.state.value.selectedTab)
-            assertTrue(
-                viewModel.state.value.messages.any {
-                    it.kind == ChatMessageKind.Source && it.text == "Hello from Whisper"
-                },
-            )
-            assertTrue(
-                viewModel.state.value.messages.none {
-                    it.kind == ChatMessageKind.System &&
-                        it.text.contains("Missing Whisper model file")
                 },
             )
         }
